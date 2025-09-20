@@ -273,8 +273,8 @@ function App() {
                     </svg>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <p style={{ fontSize: 14, margin: 0 }}>{location.name}</p>
-                        <p style={{ fontSize: 12, margin: 0, color : 'rgba(0,0,0,0.6)' }}>{location.description}</p>
+                        <p style={{ fontSize: 14, margin: 0, textAlign : 'left' }}>{location.name}</p>
+                        <p style={{ fontSize: 12, margin: 0, color : 'rgba(0,0,0,0.6)', textAlign : 'left' }}>{location.description}</p>
                     </div>
                     </div>
                 ))
@@ -331,8 +331,8 @@ function App() {
                     </svg>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <p style={{ fontSize: 14, margin: 0 }}>{location.name}</p>
-                        <p style={{ fontSize: 12, margin: 0, color : 'rgba(0,0,0,0.6)' }}>{location.description}</p>
+                        <p style={{ fontSize: 14, margin: 0, textAlign : 'left' }}>{location.name}</p>
+                        <p style={{ fontSize: 12, margin: 0, color : 'rgba(0,0,0,0.6)', textAlign : 'left' }}>{location.description}</p>
                     </div>
                     </div>
                 ))
@@ -840,7 +840,8 @@ function App() {
                             <p style={{
                             margin : 0,
                             fontSize : 14,
-                            color : 'rgba(0,0,0,0.5)'
+                            color : 'rgba(0,0,0,0.5)',
+                            textAlign : 'left'
                             }} >Drop Off Point</p>
 
                             <div style={{
@@ -948,7 +949,7 @@ function App() {
                       {/* Bus Stops */}
                       { activeTab == 'busStops' && (
 
-                        <main className='flex flex-col gap-2 items-start justify-start px-5 w-full'>
+                        <main className='flex flex-col gap-4 items-start justify-start px-5 w-full'>
                           <p className='text-black text-base font-bold'>Bus Stop Overview</p>
 
                           <section className='flex flex-col gap-2 w-full'>
@@ -971,12 +972,12 @@ function App() {
 
                               <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
 
-                                                    <div className='flex items-center justify-between'>
+                              <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-green-600 rounded-3xl" />
+                                      <div className="w-5 p-1.5 bg-amber-50 rounded-[50px] inline-flex justify-start items-center gap-2.5">
+                                          <div className="w-2.5 h-2 relative bg-amber-400 rounded-3xl" />
                                       </div>
-                                      <p className='text-black text-sm font-normal'>Brunei</p>
+                                      <p className='text-black text-sm font-normal'>Main Library</p>
                                   </div>
                                   <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
                                   <div className='flex'>
@@ -984,17 +985,17 @@ function App() {
                                     <img src="../src/assets/memoji2.png" alt="at" />
                                     <img src="../src/assets/memoji3.png" alt="at" />
                                   </div>
-                                      <p className='text-black/50 text-xs font-normal'>10+ waiting</p>
+                                      <p className='text-black/50 text-xs font-normal'>5 waiting</p>
                                   </div>
                               </div>
 
                               <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                                <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-green-600 rounded-3xl" />
+                                       <div className="w-5 p-1.5 bg-amber-50 rounded-[50px] inline-flex justify-start items-center gap-2.5">
+                                          <div className="w-2.5 h-2 relative bg-amber-400 rounded-3xl" />
                                       </div>
-                                      <p className='text-black text-sm font-normal'>Brunei</p>
+                                      <p className='text-black text-sm font-normal'>Casley Hayford</p>
                                   </div>
                                   <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
                                   <div className='flex'>
@@ -1002,17 +1003,17 @@ function App() {
                                     <img src="../src/assets/memoji2.png" alt="at" />
                                     <img src="../src/assets/memoji3.png" alt="at" />
                                   </div>
-                                      <p className='text-black/50 text-xs font-normal'>10+ waiting</p>
+                                      <p className='text-black/50 text-xs font-normal'>20+ waiting</p>
                                   </div>
                               </div>
 
                               <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                                                    <div className='flex items-center justify-between'>
+                                <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-green-600 rounded-3xl" />
+                                      <div className="w-5 p-1.5 bg-red-500/10 rounded-[50px] inline-flex justify-start items-center gap-2.5">
+                                          <div className="w-2.5 h-2 relative bg-red-500 rounded-3xl" />
                                       </div>
-                                      <p className='text-black text-sm font-normal'>Brunei</p>
+                                      <p className='text-black text-sm font-normal'>Pentecost Bus Stop</p>
                                   </div>
                                   <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
                                   <div className='flex'>
@@ -1079,7 +1080,7 @@ function App() {
                             
                             <div className='flex justify-between items-center w-full'>
                                 <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Main Library</p>
+                                    <p className='text-black text-xs'>Brunei</p>
                                     <div className='flex gap-2'>
                                         <p className='text-black/50 text-[10px] font-normal'>Start</p>
                                         <p className='text-[10px] font-normal'>8:31 AM</p>
@@ -1096,7 +1097,7 @@ function App() {
                             <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
 
                              <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Brueni</p>
+                                    <p className='text-black text-xs'>KSB</p>
                                     <div className='flex gap-2'>
                                         <p className='text-black/50 text-[10px] font-normal'>Arriving</p>
                                         <p className='text-[10px] font-normal'>8:40 AM</p>
@@ -1108,8 +1109,8 @@ function App() {
                             <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
 
                             <div className='flex justify-between items-center w-full'>
-                                <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Main Library</p>
+                                <div className='flex flex-col items-center'>
+                                    <p className='text-black text-xs'>Commerical Area</p>
                                     <div className='flex gap-2'>
                                         <p className='text-black/50 text-[10px] font-normal'>Start</p>
                                         <p className='text-[10px] font-normal'>8:31 AM</p>
@@ -1126,7 +1127,7 @@ function App() {
                             <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
 
                              <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Brueni</p>
+                                    <p className='text-black text-xs'>KSB</p>
                                     <div className='flex gap-2'>
                                         <p className='text-black/50 text-[10px] font-normal'>Arriving</p>
                                         <p className='text-[10px] font-normal'>8:40 AM</p>
