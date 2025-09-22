@@ -151,14 +151,26 @@ function App() {
     const [isSelectingDropOff, setIsSelectingDropOff] = useState(false)
     const [pickUpDetails, setpickUpDetail] =  useState<Location | null>(null)
     const [inputFocused, setInputFocused] = useState(false);
-    const [dropDown, setDropDown] = useState(true)
     const [activeTab, setActiveTab] = useState<'busStops' | 'buses'>('busStops');
     const [showLocationList, setShowLocationList] = useState(false);
+    const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
+    const [isVisible, setIsVisible] = useState(true);
+
+
+    
 
 
     const [pickupInputValue, setPickupInputValue] = useState('');
     const [dropoffInputValue, setDropoffInputValue] = useState('');
 
+
+        useEffect(() => {
+        // If both pickup and dropOff selected → show tabs
+        if (pickUp && dropOff) {
+            setShowLocationList(false);   // hide location list
+            setInputFocused(false);       // close input dropdown
+        }
+        }, [pickUp, dropOff]);
 
 
     // Add this custom hook for handling click outside
@@ -179,168 +191,107 @@ function App() {
 
 
         // location component
-      const LocationList: React.FC<LocationListProps> = ({  
-              selectedLocation, 
-            locations, 
-            isSelectingDropOff, 
-            handleDropOffPointClick, 
-            handleStartPointClick, 
-            searchQuery, 
-            //   isMobile,
-            onSelectLocation // Add this new prop
+     const LocationList: React.FC<LocationListProps> = ({  
+            selectedLocation,
+            locations,
+            isSelectingDropOff,
+            handleDropOffPointClick,
+            handleStartPointClick,
+            searchQuery,
+            onSelectLocation,
+            }) => {
 
-        }) => {
+            const [isVisible, setIsVisible] = useState(true);
+            const wrapperRef = useRef(null);
 
-              const [isVisible, setIsVisible] = useState(true);
-                const wrapperRef = useRef(null);
-                
-                useClickOutside(wrapperRef, () => {
-                    setIsVisible(false);
-                });
+            useClickOutside(wrapperRef, () => setIsVisible(false));
 
-                  const filteredLocations = locations.filter(location =>
-                        location.name.toLowerCase().includes(searchQuery.toLowerCase())
+            // inside LocationList, make this accessible via props
+            useEffect(() => {
+            if (inputFocused) {
+                setIsVisible(true);
+            }
+            }, [inputFocused]);
+
+
+         
+            const baseList = isSelectingDropOff
+            ? selectedLocation?.dropPoints ?? []   // safe default
+            : locations ?? []
+
+                // if no search query, show full list immediately
+                const filteredLocations = searchQuery.trim() === ''
+                ? baseList
+                : baseList.filter((location) =>
+                    location.name.toLowerCase().includes(searchQuery.toLowerCase())
                     );
-                    
-                    const handleLocationClick = (location) => {
-                        if (isSelectingDropOff) {
-                        handleDropOffPointClick(location);
-                        } else {
-                        handleStartPointClick(location);
-                        }
-                        onSelectLocation(); // Notify parent that a location was selected
-                    };
-                    
-                    if (!isVisible) return null;
+
+
+            // Handles click events automatically
+            const handleLocationClick = (location) => {
+                if (isSelectingDropOff) {
+                handleDropOffPointClick(location);
+                } else {
+                handleStartPointClick(location);
+                }
+                onSelectLocation?.();
+            };
+
+            // if (!isVisible) return null;
 
             return (
-            <div
-            ref={wrapperRef}
-            className="rounded-lg flex flex-col p-3 gap-3 overflow-y-auto max-h-[40vh] md:max-h-[calc(80vh-220px)] w-[360px]">
-                {filteredLocations.length === 0 ? (
+                <div
+                ref={wrapperRef}
+                className="rounded-lg flex flex-col p-3 gap-3 overflow-y-auto max-h-[80vh] md:max-h-[calc(95vh-220px)] w-[360px]"
+                >
+               {filteredLocations.length === 0 && searchQuery.trim() !== '' ? (
                 <p>No Bus stop found. Select closest bus stop</p>
                 ) : (
-                isSelectingDropOff ? 
-                filteredLocations.map((location) => (
+                    filteredLocations.map((location) => (
                     <div
-                    key={location.id}
-                    style={{
-                    borderRadius: 16,
-                    border: selectedLocation?.id === location.id ? '1px solid rgba(0,0,0,0.5)' : '1px solid rgba(0,0,0,0.1)', // Highlight selected location
-                    display: 'flex',
-                    padding: 12,
-                    alignItems: 'center',
-                    gap: 16,
-                    width: '100%',
-                    justifyContent: 'flex-start',
-                    cursor: 'pointer',
-                    backgroundColor: selectedLocation?.id === location.id ? '#F0F8FF' : '#f4f4f4f', 
-                    transition: 'bottom 0.3s ease-in-out',
-                    }}
-                    onClick={() => 
-                    handleDropOffPointClick(location) 
-                
-                    }
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 36 36" fill="none">
-                        <g clipPath="url(#clip0_629_5804)">
-                        <path d="M31 8H23V10H31V31H23V33H33V10C33 9.46957 32.7893 8.96086 32.4142 8.58579C32.0391 8.21071 31.5304 8 31 8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M19.88 3H6.12C5.55774 3 5.01851 3.22336 4.62093 3.62093C4.22336 4.01851 4 4.55774 4 5.12V33H22V5.12C22 4.55774 21.7766 4.01851 21.3791 3.62093C20.9815 3.22336 20.4423 3 19.88 3ZM20 31H17V28H9V31H6V5.12C6 5.10424 6.0031 5.08864 6.00913 5.07408C6.01516 5.05952 6.024 5.04629 6.03515 5.03515C6.04629 5.024 6.05952 5.01516 6.07408 5.00913C6.08864 5.0031 6.10424 5 6.12 5H19.88C19.8958 5 19.9114 5.0031 19.9259 5.00913C19.9405 5.01516 19.9537 5.024 19.9649 5.03515C19.976 5.04629 19.9848 5.05952 19.9909 5.07408C19.9969 5.08864 20 5.10424 20 5.12V31Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 8H10V10H8V8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 8H14V10H12V8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 8H18V10H16V8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 13H10V15H8V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 13H14V15H12V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 13H18V15H16V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 18H10V20H8V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 18H14V20H12V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 18H18V20H16V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 23H10V25H8V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 23H14V25H12V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 23H18V25H16V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M23 13H25V15H23V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M27 13H29V15H27V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M23 18H25V20H23V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M27 18H29V20H27V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M23 23H25V25H23V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M27 23H29V25H27V23Z" fill="black" fillOpacity="0.6" />
-                        </g>
-                        <defs>
-                        <clipPath id="clip0_629_5804">
-                            <rect width="36" height="36" fill="white" />
-                        </clipPath>
-                        </defs>
-                    </svg>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <p style={{ fontSize: 14, margin: 0, textAlign : 'left' }}>{location.name}</p>
-                        <p style={{ fontSize: 12, margin: 0, color : 'rgba(0,0,0,0.6)', textAlign : 'left' }}>{location.description}</p>
+                        key={location.id}
+                        style={{
+                        borderRadius: 16,
+                        border:
+                            selectedLocation?.id === location.id
+                            ? '1px solid rgba(0,0,0,0.5)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                        display: 'flex',
+                        padding: 12,
+                        alignItems: 'center',
+                        gap: 16,
+                        width: '100%',
+                        justifyContent: 'flex-start',
+                        cursor: 'pointer',
+                        backgroundColor:
+                            selectedLocation?.id === location.id ? '#F0F8FF' : '#f4f4f4f',
+                        transition: 'bottom 0.3s ease-in-out',
+                        }}
+                        onClick={() => handleLocationClick(location)}
+                    >
+                        {/* svg icon omitted for brevity */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <p style={{ fontSize: 14, margin: 0, textAlign: 'left' }}>
+                            {location.name}
+                        </p>
+                        <p
+                            style={{
+                            fontSize: 12,
+                            margin: 0,
+                            color: 'rgba(0,0,0,0.6)',
+                            textAlign: 'left',
+                            }}
+                        >
+                            {location.description}
+                        </p>
+                        </div>
                     </div>
-                    </div>
-                ))
-                :
-                filteredLocations.map((location) => (
-                    <div
-                    key={location.id}
-                    style={{
-                    borderRadius: 16,
-                    border: selectedLocation?.id === location.id ? '1px solid rgba(0,0,0,0.5)' : '1px solid rgba(0,0,0,0.1)', // Highlight selected location
-                    display: 'flex',
-                    padding: 12,
-                    alignItems: 'center',
-                    gap: 16,
-                    width: '100%',
-                    justifyContent: 'flex-start',
-                    cursor: 'pointer',
-                    backgroundColor: selectedLocation?.id === location.id ? '#F0F8FF' : '#f4f4f4f', 
-                    transition: 'bottom 0.3s ease-in-out',
-                    }}
-                    onClick={() =>  
-
-                    handleStartPointClick(location)
-                    }
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 36 36" fill="none">
-                        <g clipPath="url(#clip0_629_5804)">
-                        <path d="M31 8H23V10H31V31H23V33H33V10C33 9.46957 32.7893 8.96086 32.4142 8.58579C32.0391 8.21071 31.5304 8 31 8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M19.88 3H6.12C5.55774 3 5.01851 3.22336 4.62093 3.62093C4.22336 4.01851 4 4.55774 4 5.12V33H22V5.12C22 4.55774 21.7766 4.01851 21.3791 3.62093C20.9815 3.22336 20.4423 3 19.88 3ZM20 31H17V28H9V31H6V5.12C6 5.10424 6.0031 5.08864 6.00913 5.07408C6.01516 5.05952 6.024 5.04629 6.03515 5.03515C6.04629 5.024 6.05952 5.01516 6.07408 5.00913C6.08864 5.0031 6.10424 5 6.12 5H19.88C19.8958 5 19.9114 5.0031 19.9259 5.00913C19.9405 5.01516 19.9537 5.024 19.9649 5.03515C19.976 5.04629 19.9848 5.05952 19.9909 5.07408C19.9969 5.08864 20 5.10424 20 5.12V31Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 8H10V10H8V8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 8H14V10H12V8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 8H18V10H16V8Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 13H10V15H8V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 13H14V15H12V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 13H18V15H16V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 18H10V20H8V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 18H14V20H12V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 18H18V20H16V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M8 23H10V25H8V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M12 23H14V25H12V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M16 23H18V25H16V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M23 13H25V15H23V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M27 13H29V15H27V13Z" fill="black" fillOpacity="0.6" />
-                        <path d="M23 18H25V20H23V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M27 18H29V20H27V18Z" fill="black" fillOpacity="0.6" />
-                        <path d="M23 23H25V25H23V23Z" fill="black" fillOpacity="0.6" />
-                        <path d="M27 23H29V25H27V23Z" fill="black" fillOpacity="0.6" />
-                        </g>
-                        <defs>
-                        <clipPath id="clip0_629_5804">
-                            <rect width="36" height="36" fill="white" />
-                        </clipPath>
-                        </defs>
-                    </svg>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <p style={{ fontSize: 14, margin: 0, textAlign : 'left' }}>{location.name}</p>
-                        <p style={{ fontSize: 12, margin: 0, color : 'rgba(0,0,0,0.6)', textAlign : 'left' }}>{location.description}</p>
-                    </div>
-                    </div>
-                ))
-
+                    ))
                 )}
-            </div>
+                </div>
             );
-        };
+            };
+
 
           // Filter locations based on search query
         useEffect(() => {
@@ -402,39 +353,34 @@ function App() {
 
             const handleStartPointClick = (location: Location) => {
                 console.log('Selected pickup:', location);
-                
+
                 setpickUp(location);
                 setSelectedLocation(location);
                 setpickUpDetail(location);
                 setDropOff(null);
-                
-                // Set the input value to show the selected location
+
+                // Update inputs
                 setPickupInputValue(location.name);
-                setDropoffInputValue(''); // Clear dropoff input
-                
-                console.log(pickUp)
-                
-                // Filter valid drop-off points based on selected pickup
-                const validDropOffPoints = locations.filter((loc) =>
-                    location.dropPoints.some((dp) => dp.name === loc.name)
-                );
-                
-                setFilteredLocations(validDropOffPoints);
-                
-                // Set this last to ensure all other state is updated first
+                setDropoffInputValue('');
+
+                // Switch mode: only allow drop-off selection from this location’s dropPoints
                 setIsSelectingDropOff(true);
-                setInputFocused(false); // Close the dropdown
+                setInputFocused(false); // close dropdown
             };
 
-            const handleDropOffPointClick = (location: Location) => {
+
+           const handleDropOffPointClick = (location: Location) => {
+                console.log('Selected dropoff:', location);
+
                 setSelectedLocation(location);
                 setDropOff(location);
-                setDropoffInputValue(location.name); // Set dropoff input value
+                setDropoffInputValue(location.name);
+
+                // Done selecting, reset back to normal (show all again if needed)
                 setIsSelectingDropOff(false);
-                
-                setFilteredLocations(locations);
-                setInputFocused(false); // Close the dropdown
+                setInputFocused(false);
             };
+
   
             const handleSearch = (event: React.ChangeEvent<HTMLInputElement>, inputType: 'pickup' | 'dropoff') => {
                     const searchValue = event.target.value;
@@ -570,6 +516,11 @@ function App() {
                 setFilteredLocations(locations);
                 setIsSelectingDropOff(false);
                 setSelectedLocation(null);
+                setShowLocationList(true)
+            };
+
+            const handleClearPickUpAndShowTabs = () => {
+                setShowLocationList(false)
             };
 
             const handleClearDropOff = () => {
@@ -639,6 +590,7 @@ function App() {
             const handleInputBlur = () => {
                 setInputFocused(false);
                 // Don't hide the list here - let the click outside handler manage it
+                
             };
 
           const handleKeyPress = (event : any) => {
@@ -648,9 +600,18 @@ function App() {
             }
           };
 
-            const handleLocationSelect = () => {
-            setShowLocationList(false);
-        };
+            const handleLocationSelect = (locationId: string) => {
+                // Find the selected location
+                const location = locations.find(loc => loc.id === locationId);
+                if (location) {
+                    setSelectedLocation(location);
+                    setDropPoints(location.dropPoints); // Filtered drop points
+                } else {
+                    setSelectedLocation(null);
+                    setDropPoints([]);
+                }
+                };
+
 
 
 
@@ -781,7 +742,9 @@ function App() {
                                 placeholder="Select Pickup Bus Stop"
                                 value={pickupInputValue}
                                 onChange={(e) => handleSearch(e, 'pickup')}
-                                onFocus={handleInputFocus}
+                                  onFocus={() => {
+                                        handleInputFocus(false); // for pickup
+                                    }}
                                 onBlur={handleInputBlur}
                                 onKeyPress={handleKeyPress}
                                 className={`flex-1 border-none bg-transparent text-[14px] ${pickUp ? 'text-black' : 'text-black/60'} outline-none p-0 transition-all duration-300 touch-manipulation`}
@@ -789,7 +752,7 @@ function App() {
 
                             {pickUp ? (
                                 <svg
-                                    onClick={handleClearDropOff}
+                                    onClick={handleClearPickUp}
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="16"
                                     height="16"
@@ -803,7 +766,7 @@ function App() {
                                 </svg>
                                 ) : (
                                 <svg
-                                    onClick={handleClearPickUp}
+                                    onClick={handleClearPickUpAndShowTabs}
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="16"
                                     height="16"
@@ -884,7 +847,7 @@ function App() {
                                 type="text"
                                 placeholder="Select Drop Off Bus Stop"
                                 value={dropOff?.name}
-                                onChange={handleSearch || searchQuery}
+                                onChange={dropoffInputValue || searchQuery}
                                 onFocus={handleInputFocus}
                                 onBlur={handleInputBlur}
                                 style={{
