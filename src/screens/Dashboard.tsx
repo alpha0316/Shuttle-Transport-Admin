@@ -153,8 +153,8 @@ function App() {
     const [inputFocused, setInputFocused] = useState(false);
     const [activeTab, setActiveTab] = useState<'busStops' | 'buses'>('busStops');
     const [showLocationList, setShowLocationList] = useState(false);
-    const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
-    const [isVisible, setIsVisible] = useState(true);
+    // const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
+
 
 
     
@@ -174,9 +174,9 @@ function App() {
 
 
     // Add this custom hook for handling click outside
-        function useClickOutside(ref, callback) {
+        function useClickOutside(ref: unknown, callback: unknown) {
         useEffect(() => {
-            function handleClickOutside(event) {
+            function handleClickOutside(event: { target: any; }) {
             if (ref.current && !ref.current.contains(event.target)) {
                 callback();
             }
@@ -201,7 +201,7 @@ function App() {
             onSelectLocation,
             }) => {
 
-            const [isVisible, setIsVisible] = useState(true);
+            const [, setIsVisible] = useState(true);
             const wrapperRef = useRef(null);
 
             useClickOutside(wrapperRef, () => setIsVisible(false));
@@ -228,7 +228,7 @@ function App() {
 
 
             // Handles click events automatically
-            const handleLocationClick = (location) => {
+            const handleLocationClick = (location: DropPoint) => {
                 if (isSelectingDropOff) {
                 handleDropOffPointClick(location);
                 } else {
@@ -600,17 +600,17 @@ function App() {
             }
           };
 
-            const handleLocationSelect = (locationId: string) => {
-                // Find the selected location
-                const location = locations.find(loc => loc.id === locationId);
-                if (location) {
-                    setSelectedLocation(location);
-                    setDropPoints(location.dropPoints); // Filtered drop points
-                } else {
-                    setSelectedLocation(null);
-                    setDropPoints([]);
-                }
-                };
+            // const handleLocationSelect = (locationId: string) => {
+            //     // Find the selected location
+            //     const location = locations.find(loc => loc.id === locationId);
+            //     if (location) {
+            //         setSelectedLocation(location);
+            //         setDropPoints(location.dropPoints); // Filtered drop points
+            //     } else {
+            //         setSelectedLocation(null);
+            //         setDropPoints([]);
+            //     }
+            //     };
 
 
 
@@ -656,13 +656,13 @@ function App() {
 
               <main className='flex'>
 
-                <section className='w-[850px] h-[120%] bg-black/60'>
+                <section className='w-[850px] h-190 bg-black/60'>
 
                 <MapGL 
                 //    locations={locations}
-                  // pickUp={pickUp}
+                  pickUp={pickUp}
                   // setPickUp={setPickUp}
-                  // dropOff={dropOff}
+                  dropOff={dropOff}
                   // setDropOff={setDropOff}
                   // isSelectingDropOff={isSelectingDropOff}
                   // setIsSelectingDropOff={setIsSelectingDropOff}
@@ -933,7 +933,7 @@ function App() {
                                   </div>
                               </div>
 
-                              <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
 
                               <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
@@ -952,7 +952,7 @@ function App() {
                                   </div>
                               </div>
 
-                              <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                                <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
                                        <div className="w-5 p-1.5 bg-amber-50 rounded-[50px] inline-flex justify-start items-center gap-2.5">
@@ -970,7 +970,7 @@ function App() {
                                   </div>
                               </div>
 
-                              <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                                 <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
                                       <div className="w-5 p-1.5 bg-red-500/10 rounded-[50px] inline-flex justify-start items-center gap-2.5">
@@ -988,7 +988,7 @@ function App() {
                                   </div>
                               </div>
 
-                              <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                                                     <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
                                       <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
@@ -1006,7 +1006,7 @@ function App() {
                                   </div>
                               </div>
 
-                              <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                                                     <div className='flex items-center justify-between'>
                                   <div className='flex gap-2 items-center'>
                                       <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
@@ -1024,7 +1024,7 @@ function App() {
                                   </div>
                               </div>
 
-                              <div className="relative left-2 w-0 h-5 origin-top-left outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                              <div className="relative left-2 w-0 h-5 origin-top-left outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                             
 
                           </section>
@@ -1069,7 +1069,7 @@ function App() {
 
                             </div>
 
-                            <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                            <div className="self-stretch h-0 outline-1 outline-offset-[-0.50px] outline-black/10"></div>
 
                             <div className='flex justify-between items-center w-full'>
                                 <div className='flex flex-col items-center'>
@@ -1099,7 +1099,7 @@ function App() {
 
                             </div>
 
-                            <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                            <div className="self-stretch h-0  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                                               <div className='flex justify-between items-center w-full'>
                                 <div className='flex flex-col'>
                                     <p className='text-black text-xs'>Main Library</p>
@@ -1128,7 +1128,7 @@ function App() {
 
                             </div>
 
-                            <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                            <div className="self-stretch h-0  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
 
                                               <div className='flex justify-between items-center w-full'>
                                 <div className='flex flex-col'>
@@ -1158,7 +1158,7 @@ function App() {
 
                             </div>
 
-                            <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                            <div className="self-stretch h-0  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
                                               <div className='flex justify-between items-center w-full'>
                                 <div className='flex flex-col'>
                                     <p className='text-black text-xs'>Main Library</p>
@@ -1187,7 +1187,7 @@ function App() {
 
                             </div>
 
-                            <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                            <div className="self-stretch h-0 outline-1 outline-offset-[-0.50px] outline-black/10"></div>
 
                           </section>
                       </main> 
