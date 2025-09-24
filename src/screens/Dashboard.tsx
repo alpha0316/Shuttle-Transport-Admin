@@ -1,6 +1,6 @@
 
 import './../App.css'
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import MapGL from './../components/map'
 // import ErrorBoundary from './components/ErrorBoundary';
 // import { useNavigate } from 'react-router-dom';
@@ -36,6 +36,7 @@ function App() {
 
       const locations: Location[]  = [
             { id: '1', name: 'Main Library', description: 'On Campus', latitude: 6.675033566213408, longitude: -1.5723546778455368,
+                
             dropPoints: [ 
                 { name: 'KSB', latitude: 6.669314250173885, longitude: -1.567181795001016 },
                 { name: 'Pentecost Busstop', latitude: 6.674545299373284, longitude: -1.5675650457295751 },
@@ -140,7 +141,79 @@ function App() {
             },
         ];
 
- 
+    const busStops = [
+        {
+            id: 1,
+            name: "Brunei",
+            color: "bg-green-600/30",
+            dotColor: "bg-green-600",
+            waiting: "10+ waiting",
+        },
+        {
+            id: 2,
+            name: "Main Library",
+            color: "bg-amber-50",
+            dotColor: "bg-amber-400",
+            waiting: "5 waiting",
+        },
+        {
+            id: 3,
+            name: "Casley Hayford",
+            color: "bg-amber-50",
+            dotColor: "bg-amber-400",
+            waiting: "20+ waiting",
+        },
+        {
+            id: 4,
+            name: "Pentecost Bus Stop",
+            color: "bg-red-500/10",
+            dotColor: "bg-red-500",
+            waiting: "10+ waiting",
+        },
+        {
+            id: 5,
+            name: "KSB",
+            color: "bg-green-600/30",
+            dotColor: "bg-green-600",
+            waiting: "10+ waiting",
+        },
+        {
+            id: 6,
+            name: "Hall 7",
+            color: "bg-green-600/30",
+            dotColor: "bg-green-600",
+            waiting: "10+ waiting",
+        },
+            {
+            id: 7,
+            name: "Brunei",
+            color: "bg-green-600/30",
+            dotColor: "bg-green-600",
+            waiting: "10+ waiting",
+        },
+            {
+            id: 8,
+            name: "Commercial Area",
+            color: "bg-green-600/30",
+            dotColor: "bg-green-600",
+            waiting: "10+ waiting",
+        },
+            {
+            id: 9,
+            name: "Conti Bus stop",
+            color: "bg-green-600/30",
+            dotColor: "bg-green-600",
+            waiting: "10+ waiting",
+        },
+            {
+            id: 10,
+            name: "Gaza",
+            color: "bg-green-600/30",
+            dotColor: "bg-green-600",
+            waiting: "10+ waiting",
+        },
+        ];
+
 
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -163,6 +236,8 @@ function App() {
     const [pickupInputValue, setPickupInputValue] = useState('');
     const [dropoffInputValue, setDropoffInputValue] = useState('');
 
+
+        
 
         useEffect(() => {
         // If both pickup and dropOff selected → show tabs
@@ -191,106 +266,175 @@ function App() {
 
 
         // location component
-     const LocationList: React.FC<LocationListProps> = ({  
-            selectedLocation,
-            locations,
-            isSelectingDropOff,
-            handleDropOffPointClick,
-            handleStartPointClick,
-            searchQuery,
-            onSelectLocation,
-            }) => {
+        const LocationList: React.FC<LocationListProps> = ({  
+                selectedLocation,
+                locations,
+                isSelectingDropOff,
+                handleDropOffPointClick,
+                handleStartPointClick,
+                searchQuery,
+                onSelectLocation,
+                }) => {
 
-            const [, setIsVisible] = useState(true);
-            const wrapperRef = useRef(null);
+                const [, setIsVisible] = useState(true);
+                const wrapperRef = useRef(null);
 
-            useClickOutside(wrapperRef, () => setIsVisible(false));
+                useClickOutside(wrapperRef, () => setIsVisible(false));
 
-            // inside LocationList, make this accessible via props
-            useEffect(() => {
-            if (inputFocused) {
-                setIsVisible(true);
-            }
-            }, [inputFocused]);
-
-
-         
-            const baseList = isSelectingDropOff
-            ? selectedLocation?.dropPoints ?? []   // safe default
-            : locations ?? []
-
-                // if no search query, show full list immediately
-                const filteredLocations = searchQuery.trim() === ''
-                ? baseList
-                : baseList.filter((location) =>
-                    location.name.toLowerCase().includes(searchQuery.toLowerCase())
-                    );
-
-
-            // Handles click events automatically
-            const handleLocationClick = (location: DropPoint) => {
-                if (isSelectingDropOff) {
-                handleDropOffPointClick(location);
-                } else {
-                handleStartPointClick(location);
+                // inside LocationList, make this accessible via props
+                useEffect(() => {
+                if (inputFocused) {
+                    setIsVisible(true);
                 }
-                onSelectLocation?.();
-            };
+                }, [inputFocused]);
 
-            // if (!isVisible) return null;
 
-            return (
-                <div
-                ref={wrapperRef}
-                className="rounded-lg flex flex-col p-3 gap-3 overflow-y-auto max-h-[80vh] md:max-h-[calc(95vh-220px)] w-[360px]"
-                >
-               {filteredLocations.length === 0 && searchQuery.trim() !== '' ? (
-                <p>No Bus stop found. Select closest bus stop</p>
-                ) : (
-                    filteredLocations.map((location) => (
+            
+                const baseList = isSelectingDropOff
+                ? selectedLocation?.dropPoints ?? []   // safe default
+                : locations ?? []
+
+                    // if no search query, show full list immediately
+                    const filteredLocations = searchQuery.trim() === ''
+                    ? baseList
+                    : baseList.filter((location) =>
+                        location.name.toLowerCase().includes(searchQuery.toLowerCase())
+                        );
+
+
+                // Handles click events automatically
+                const handleLocationClick = (location: DropPoint) => {
+                    if (isSelectingDropOff) {
+                    handleDropOffPointClick(location);
+                    } else {
+                    handleStartPointClick(location);
+                    }
+                    onSelectLocation?.();
+                };
+
+                // if (!isVisible) return null;
+
+                return (
                     <div
-                        key={location.id}
-                        style={{
-                        borderRadius: 16,
-                        border:
-                            selectedLocation?.id === location.id
-                            ? '1px solid rgba(0,0,0,0.5)'
-                            : '1px solid rgba(0,0,0,0.1)',
-                        display: 'flex',
-                        padding: 12,
-                        alignItems: 'center',
-                        gap: 16,
-                        width: '100%',
-                        justifyContent: 'flex-start',
-                        cursor: 'pointer',
-                        backgroundColor:
-                            selectedLocation?.id === location.id ? '#F0F8FF' : '#f4f4f4f',
-                        transition: 'bottom 0.3s ease-in-out',
-                        }}
-                        onClick={() => handleLocationClick(location)}
+                    ref={wrapperRef}
+                    className="rounded-lg flex flex-col p-3 gap-3 overflow-y-auto max-h-[80vh] md:max-h-[calc(95vh-220px)] w-[360px]"
                     >
-                        {/* svg icon omitted for brevity */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <p style={{ fontSize: 14, margin: 0, textAlign: 'left' }}>
-                            {location.name}
-                        </p>
-                        <p
+                {filteredLocations.length === 0 && searchQuery.trim() !== '' ? (
+                    <p>No Bus stop found. Select closest bus stop</p>
+                    ) : (
+                        filteredLocations.map((location) => (
+                        <div
+                            key={location.id}
                             style={{
-                            fontSize: 12,
-                            margin: 0,
-                            color: 'rgba(0,0,0,0.6)',
-                            textAlign: 'left',
+                            borderRadius: 16,
+                            border:
+                                selectedLocation?.id === location.id
+                                ? '1px solid rgba(0,0,0,0.5)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            padding: 12,
+                            alignItems: 'center',
+                            gap: 16,
+                            width: '100%',
+                            justifyContent: 'flex-start',
+                            cursor: 'pointer',
+                            backgroundColor:
+                                selectedLocation?.id === location.id ? '#F0F8FF' : '#f4f4f4f',
+                            transition: 'bottom 0.3s ease-in-out',
                             }}
+                            onClick={() => handleLocationClick(location)}
                         >
-                            {location.description}
-                        </p>
+                            {/* svg icon omitted for brevity */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <p style={{ fontSize: 14, margin: 0, textAlign: 'left' }}>
+                                {location.name}
+                            </p>
+                            <p
+                                style={{
+                                fontSize: 12,
+                                margin: 0,
+                                color: 'rgba(0,0,0,0.6)',
+                                textAlign: 'left',
+                                }}
+                            >
+                                {location.description}
+                            </p>
+                            </div>
+                        </div>
+                        ))
+                    )}
+                    </div>
+                );
+                };
+
+
+         const filteredBusStops = useMemo(() => {
+            // Collect all drop point names from the pickup location
+            const dropPointNames = pickUp?.dropPoints?.map((dp) => dp.name) || [];
+
+            // If both pickUp & dropOff selected → show pickUp, dropPoints, dropOff
+            if (pickUp && dropOff) {
+                return [
+                // The pickup stop
+                ...busStops.filter((stop) => stop.name === pickUp.name),
+
+                // Any bus stops that match the drop points of pickup
+                ...busStops.filter((stop) => dropPointNames.includes(stop.name)),
+
+                // The dropOff stop
+                ...busStops.filter((stop) => stop.name === dropOff.name),
+                ];
+            }
+
+            // If only pickUp selected → show pickUp + its drop points + others
+            if (pickUp) {
+                return [
+                ...busStops.filter((stop) => stop.name === pickUp.name),
+                ...busStops.filter((stop) => dropPointNames.includes(stop.name)),
+                ];
+            }
+
+            // If only dropOff selected → show it
+            if (dropOff) {
+                return [
+                ...busStops.filter((stop) => stop.name === dropOff.name),
+                ];
+            }
+
+            // else show everything
+            return busStops;
+            }, [pickUp, dropOff, busStops]);
+
+
+
+            const BusStopCard = ({ name, color, dotColor, waiting }) => {
+                return (
+                    <>
+                    <div className="flex items-center justify-between">
+                        <div className="flex gap-2 items-center">
+                        <div className={`w-5 p-1.5 ${color} rounded-[50px] inline-flex justify-start items-center gap-2.5`}>
+                            <div className={`w-2.5 h-2 relative ${dotColor} rounded-3xl`} />
+                        </div>
+                        <p className="text-black text-sm font-normal">{name}</p>
+                        </div>
+
+                        <div className="flex gap-2 items-center p-1 bg-neutral-50 rounded-xl">
+                        <div className="flex">
+                            <img src="../src/assets/memoji.png" alt="at" />
+                            <img src="../src/assets/memoji2.png" alt="at" />
+                            <img src="../src/assets/memoji3.png" alt="at" />
+                        </div>
+                        <p className="text-black/50 text-xs font-normal">{waiting}</p>
                         </div>
                     </div>
-                    ))
-                )}
-                </div>
-            );
-            };
+
+                    <div className="relative left-2 w-0 h-5 origin-top-left outline-1 outline-offset-[-0.50px] outline-black/10"></div>
+                    </>
+                );
+                };
+
+
+
 
 
           // Filter locations based on search query
@@ -910,127 +1054,24 @@ function App() {
                       </header>
 
                       {/* Bus Stops */}
-                      { activeTab == 'busStops' && (
+                     {activeTab === 'busStops' && (
+                        <main className="flex flex-col gap-4 items-start justify-start px-5 w-full overflow-y-auto md:max-h-[calc(90vh-220px)]">
+                            <p className="text-black text-base font-bold">Bus Stop Overview</p>
 
-                        <main className='flex flex-col gap-4 items-start justify-start px-5 w-full'>
-                          <p className='text-black text-base font-bold'>Bus Stop Overview</p>
+                            <section className="flex flex-col gap-2 w-full">
+                            {filteredBusStops.map((stop) => (
+                                <BusStopCard
+                                key={stop.id}
+                                name={stop.name}
+                                color={stop.color}
+                                dotColor={stop.dotColor}
+                                waiting={stop.waiting}
+                                />
+                            ))}
+                            </section>
+                        </main>
+                        )}
 
-                          <section className='flex flex-col gap-2 w-full'>
-                              <div className='flex items-center justify-between'>
-                                  <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-green-600 rounded-3xl" />
-                                      </div>
-                                      <p className='text-black text-sm font-normal'>Brunei</p>
-                                  </div>
-                                  <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
-                                  <div className='flex'>
-                                    <img src="../src/assets/memoji.png" alt="at" />
-                                    <img src="../src/assets/memoji2.png" alt="at" />
-                                    <img src="../src/assets/memoji3.png" alt="at" />
-                                  </div>
-                                      <p className='text-black/50 text-xs font-normal'>10+ waiting</p>
-                                  </div>
-                              </div>
-
-                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-
-                              <div className='flex items-center justify-between'>
-                                  <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-amber-50 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-amber-400 rounded-3xl" />
-                                      </div>
-                                      <p className='text-black text-sm font-normal'>Main Library</p>
-                                  </div>
-                                  <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
-                                  <div className='flex'>
-                                    <img src="../src/assets/memoji.png" alt="at" />
-                                    <img src="../src/assets/memoji2.png" alt="at" />
-                                    <img src="../src/assets/memoji3.png" alt="at" />
-                                  </div>
-                                      <p className='text-black/50 text-xs font-normal'>5 waiting</p>
-                                  </div>
-                              </div>
-
-                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                               <div className='flex items-center justify-between'>
-                                  <div className='flex gap-2 items-center'>
-                                       <div className="w-5 p-1.5 bg-amber-50 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-amber-400 rounded-3xl" />
-                                      </div>
-                                      <p className='text-black text-sm font-normal'>Casley Hayford</p>
-                                  </div>
-                                  <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
-                                  <div className='flex'>
-                                    <img src="../src/assets/memoji.png" alt="at" />
-                                    <img src="../src/assets/memoji2.png" alt="at" />
-                                    <img src="../src/assets/memoji3.png" alt="at" />
-                                  </div>
-                                      <p className='text-black/50 text-xs font-normal'>20+ waiting</p>
-                                  </div>
-                              </div>
-
-                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                                <div className='flex items-center justify-between'>
-                                  <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-red-500/10 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-red-500 rounded-3xl" />
-                                      </div>
-                                      <p className='text-black text-sm font-normal'>Pentecost Bus Stop</p>
-                                  </div>
-                                  <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
-                                  <div className='flex'>
-                                    <img src="../src/assets/memoji.png" alt="at" />
-                                    <img src="../src/assets/memoji2.png" alt="at" />
-                                    <img src="../src/assets/memoji3.png" alt="at" />
-                                  </div>
-                                      <p className='text-black/50 text-xs font-normal'>10+ waiting</p>
-                                  </div>
-                              </div>
-
-                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                                                    <div className='flex items-center justify-between'>
-                                  <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-green-600 rounded-3xl" />
-                                      </div>
-                                      <p className='text-black text-sm font-normal'>Brunei</p>
-                                  </div>
-                                  <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
-                                  <div className='flex'>
-                                    <img src="../src/assets/memoji.png" alt="at" />
-                                    <img src="../src/assets/memoji2.png" alt="at" />
-                                    <img src="../src/assets/memoji3.png" alt="at" />
-                                  </div>
-                                      <p className='text-black/50 text-xs font-normal'>10+ waiting</p>
-                                  </div>
-                              </div>
-
-                              <div className="relative left-2 w-0 h-5 origin-top-left  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                                                    <div className='flex items-center justify-between'>
-                                  <div className='flex gap-2 items-center'>
-                                      <div className="w-5 p-1.5 bg-green-600/30 rounded-[50px] inline-flex justify-start items-center gap-2.5">
-                                          <div className="w-2.5 h-2 relative bg-green-600 rounded-3xl" />
-                                      </div>
-                                      <p className='text-black text-sm font-normal'>Brunei</p>
-                                  </div>
-                                  <div className='flex gap-2 items-center p-1 bg-neutral-50 rounded-xl'>
-                                  <div className='flex'>
-                                    <img src="../src/assets/memoji.png" alt="at" />
-                                    <img src="../src/assets/memoji2.png" alt="at" />
-                                    <img src="../src/assets/memoji3.png" alt="at" />
-                                  </div>
-                                      <p className='text-black/50 text-xs font-normal'>10+ waiting</p>
-                                  </div>
-                              </div>
-
-                              <div className="relative left-2 w-0 h-5 origin-top-left outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                            
-
-                          </section>
-
-                      </main>
-                       )}
 
 
 
