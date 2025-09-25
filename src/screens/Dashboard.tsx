@@ -273,7 +273,7 @@ function App() {
                 handleDropOffPointClick,
                 handleStartPointClick,
                 searchQuery,
-                onSelectLocation,
+                // onSelectLocation,
                 }) => {
 
                 const [, setIsVisible] = useState(true);
@@ -376,13 +376,13 @@ function App() {
             if (pickUp && dropOff) {
                 return [
                 // The pickup stop
-                ...busStops.filter((stop) => stop.name === pickUp.name),
+                // ...busStops.filter((stop) => stop.name === pickUp.name),
 
                 // Any bus stops that match the drop points of pickup
                 ...busStops.filter((stop) => dropPointNames.includes(stop.name)),
 
                 // The dropOff stop
-                ...busStops.filter((stop) => stop.name === dropOff.name),
+                // ...busStops.filter((stop) => stop.name === dropOff.name),
                 ];
             }
 
