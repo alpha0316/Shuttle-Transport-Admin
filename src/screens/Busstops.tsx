@@ -1,6 +1,7 @@
 
 import './../App.css'
 import { useState } from 'react';
+import CustomTable from './../components/BusStopTable';
 
 // import ErrorBoundary from './components/ErrorBoundary';
 // import { useNavigate } from 'react-router-dom';
@@ -13,7 +14,7 @@ function App() {
 
   return (
     <>
-      <main className='flex '>
+      <main className='flex flex-col'>
           
 
           <section className='flex flex-col w-full '>
@@ -53,6 +54,8 @@ function App() {
 
             
           </section>
+
+           <CustomTable/>
 
       </main>
     </>
