@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import MapGL from './../components/map'
 // import ErrorBoundary from './components/ErrorBoundary';
 // import { useNavigate } from 'react-router-dom';
+import { useShuttleSocket } from '../../hooks/useShuttleSocket';
 
 interface DropPoint {
   name: string;
@@ -29,6 +30,31 @@ interface LocationListProps {
   handleStartPointClick: (location: Location) => void;
   isMobile: boolean;
 }
+
+export interface Driver  {
+  busID: string; 
+  active: boolean; 
+  busRoute: Route[];
+  coords : Coordinates
+}
+
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+  speed?: number;        
+  timestamp?: number;    
+  heading?: number; 
+}
+
+interface Route {
+  geometry: GeoJSON.Geometry; 
+  distance: number;
+  duration: number;
+  start: Coordinates;
+  end: Coordinates;
+  stops: string[];
+}
+
 
 function App() {
 
@@ -215,6 +241,7 @@ function App() {
         ];
 
 
+    const BASE_CUSTOMER_URL = "https://shuttle-backend-0.onrender.com/api/v1"
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredLocations, setFilteredLocations] = useState<Location[]>(locations);
@@ -227,17 +254,81 @@ function App() {
     const [activeTab, setActiveTab] = useState<'busStops' | 'buses'>('busStops');
     const [showLocationList, setShowLocationList] = useState(false);
     // const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
-
-
-
-    
-
-
     const [pickupInputValue, setPickupInputValue] = useState('');
     const [dropoffInputValue, setDropoffInputValue] = useState('');
+     const [busRoute, setBusRoute] = useState([])
+     const [drivers, setDrivers] = useState<Driver[]>([]);
 
 
-        
+     const shuttles = useShuttleSocket();
+
+     ////websocket connect
+      useEffect(() => {
+            if (Array.isArray(shuttles) && shuttles.length > 0) {
+                const mappedDrivers: Driver[] = shuttles
+                .map((shuttle: any) => {
+                    const innerLocation = shuttle.location?.location || {};
+                    
+                    type BusRouteItem = { busID: string; busRoute: any[] };
+                    
+                    /// compared the IDs of the API to the Websocket
+                    const matchedRoute = Array.isArray(busRoute)
+                    ? (busRoute as BusRouteItem[]).find((route) => {
+                        const shuttleId = shuttle.driverId || shuttle.shuttleId || shuttle.id;
+                        if (!route.busID || !shuttleId) return false;
+                        
+                        return route.busID.replace(/\D/g, '') === shuttleId.replace(/\D/g, '');
+                        })
+                    : undefined;
+
+                    let stops: any[] = [];
+                    if (matchedRoute && 
+                        Array.isArray(matchedRoute.busRoute) && 
+                        matchedRoute.busRoute.length > 0 &&
+                        Array.isArray(matchedRoute.busRoute[0].stops)) {
+                    stops = matchedRoute.busRoute[0].stops;
+                    }
+
+                    return {
+                    busID: shuttle.driverId || shuttle.shuttleId || shuttle.id || '',
+                    active: shuttle.isActive ?? true,
+                    busRoute: stops,
+                    coords: {
+                        latitude: innerLocation.latitude ?? 0,
+                        longitude: innerLocation.longitude ?? 0,
+                        speed: innerLocation.speed ?? 0,
+                        heading: innerLocation.heading ?? 0,
+                        timestamp: innerLocation.timestamp
+                        ? new Date(innerLocation.timestamp).getTime()
+                        : Date.now(),
+                    },
+                    };
+                })
+                .filter((driver) => {
+                    return driver.coords.latitude !== 0 || driver.coords.longitude !== 0;
+                })
+                .reduce((unique: Driver[], driver) => {
+                    const numericId = driver.busID.replace(/\D/g, '');
+                    const existing = unique.find(d => d.busID.replace(/\D/g, '') === numericId);
+                    
+            if (!existing) {
+            unique.push(driver);
+            } else if (
+            typeof driver.coords.timestamp === 'number' &&
+            typeof existing.coords.timestamp === 'number' &&
+            driver.coords.timestamp > existing.coords.timestamp
+            ) {
+            const index = unique.findIndex(d => d.busID.replace(/\D/g, '') === numericId);
+            unique[index] = driver;
+            }
+                    
+                    return unique;
+                }, []);
+
+                setDrivers(mappedDrivers);
+
+            }
+            }, [shuttles, busRoute]);
 
         useEffect(() => {
         // If both pickup and dropOff selected → show tabs
@@ -246,6 +337,39 @@ function App() {
             setInputFocused(false);       // close input dropdown
         }
         }, [pickUp, dropOff]);
+
+        /// fetch from API
+         useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        const response = await fetch(`${BASE_CUSTOMER_URL}/drivers/drivers`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch drivers");
+        }
+        
+        const data = await response.json();
+        console.log('data', data.drivers)
+        setDrivers(data.drivers || [])
+        // Store an array of { busID, busRoute } for each driver
+        if (Array.isArray(data.drivers)) {
+          const busRoutes = data.drivers.map((driver: any) => ({
+            busID: driver.busID,
+            busRoute: driver.busRoute,
+          }));
+          setBusRoute(busRoutes);
+          console.log('data', data)
+          // console.log('selected Routes', busRoute)
+        }
+
+
+      } catch (err) {
+        console.error("Error fetching drivers:", err);
+      }
+    };
+
+    fetchDrivers();
+  }, []);
 
 
     // Add this custom hook for handling click outside
@@ -309,7 +433,7 @@ function App() {
                     } else {
                     handleStartPointClick(location);
                     }
-                    onSelectLocation?.();
+                    selectedLocation?.();
                 };
 
                 // if (!isVisible) return null;
@@ -1076,166 +1200,68 @@ function App() {
 
 
                       {/* Buses*/}
-                      { activeTab == 'buses' && (
+                     {activeTab === 'buses' && (
                         <main className='flex flex-col gap-2 items-start justify-start px-5 w-full'>
-                          <p className='text-black text-base font-bold'>Active Buses</p>
+                            <p className='text-black text-base font-bold'>Active Buses</p>
 
-                          <section className='flex flex-col gap-4 w-full'>
+                            <section className='flex flex-col gap-4 w-full'>
+                            {drivers
+                                .filter(driver => driver.active) // Only show active drivers
+                                .map((driver, index) => {
+                                const busRoute = driver.busRoute?.[0];
+                                const stops = busRoute?.stops || [];
+                                const startStop = stops[0] || 'Unknown';
+                                const endStop = stops[stops.length - 4 ] || 'Unknown';
+                                
+                                // Generate crowd density status (you can replace this with real data later)
+                                const crowdDensity = Math.random() > 0.5 ? '🚫 Full' : '🟢 Available';
+                                const crowdColor = crowdDensity === '🚫 Full' ? 'bg-red-50 text-red-900 border border-red-50' : 'bg-green-50 text-green-900 border border-green-50';
+   
+                                return (
+                                    <div key={driver.busID || driver.driverID || index}>
+                                    <div className='flex justify-between items-center w-full'>
+                                    
+                                        <p className='text-black text-xs'>{startStop}</p>
+                               
+
+                                        <div className="w-9 h-0.5 relative bg-green-600 rounded-3xl" />
+
+                                        <div className='flex gap-1 flex-col items-start mb-5'>
+                                        <p className={`text-[8px] pl-1.5 pr-2 py-px ${crowdColor} rounded-2xl border`}>
+                                            {crowdDensity}
+                                        </p>
+                                        <div className="flex items-center gap-1">
+                                            <BusIcon />
+                                           
+                                        </div>
+                                        </div>
+
+                                        <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
+
+                                        <div className='flex flex-col'>
+                                        <p className='text-black text-xs'>{endStop}</p>
+                                     
+                                        </div>
+                                    </div>
+
+                                 
+
+                                  
+
+                                    </div>
+                                );
+                                })}
                             
-                            <div className='flex justify-between items-center w-full'>
-                                <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Brunei</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Start</p>
-                                        <p className='text-[10px] font-normal'>8:31 AM</p>
-                                    </div>
+                            {/* Show message if no active buses */}
+                            {drivers.filter(driver => driver.active).length === 0 && (
+                                <div className="text-center py-8 text-black/50">
+                                <p className="text-sm">No active buses at the moment</p>
+                                <p className="text-xs mt-1">Check back later for updates</p>
                                 </div>
-
-                            <div className="w-9 h-0.5 relative bg-green-600 rounded-3xl" />
-
-                            <div className='flex gap-1 flex-col items-center mb-6'>
-                                <p className='text-[8px] pl-1.5 pr-2 py-px bg-red-50 rounded-2xl border text-red-900'>🚫 Full</p>
-                                <BusIcon/>
-                            </div>
-
-                            <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
-
-                             <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>KSB</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Arriving</p>
-                                        <p className='text-[10px] font-normal'>8:40 AM</p>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div className="self-stretch h-0 outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-
-                            <div className='flex justify-between items-center w-full'>
-                                <div className='flex flex-col items-center'>
-                                    <p className='text-black text-xs'>Commerical Area</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Start</p>
-                                        <p className='text-[10px] font-normal'>8:31 AM</p>
-                                    </div>
-                                </div>
-
-                            <div className="w-9 h-0.5 relative bg-green-600 rounded-3xl" />
-
-                            <div className='flex gap-1 flex-col items-center mb-6'>
-                                <p className='text-[8px] pl-1.5 pr-2 py-px bg-red-50 rounded-2xl border text-red-900'>🚫 Full</p>
-                                <BusIcon/>
-                            </div>
-
-                            <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
-
-                             <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>KSB</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Arriving</p>
-                                        <p className='text-[10px] font-normal'>8:40 AM</p>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div className="self-stretch h-0  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                                              <div className='flex justify-between items-center w-full'>
-                                <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Main Library</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Start</p>
-                                        <p className='text-[10px] font-normal'>8:31 AM</p>
-                                    </div>
-                                </div>
-
-                            <div className="w-9 h-0.5 relative bg-green-600 rounded-3xl" />
-
-                            <div className='flex gap-1 flex-col items-center mb-6'>
-                                <p className='text-[8px] pl-1.5 pr-2 py-px bg-red-50 rounded-2xl border text-red-900'>🚫 Full</p>
-                                <BusIcon/>
-                            </div>
-
-                            <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
-
-                             <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Brueni</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Arriving</p>
-                                        <p className='text-[10px] font-normal'>8:40 AM</p>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div className="self-stretch h-0  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-
-                                              <div className='flex justify-between items-center w-full'>
-                                <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Main Library</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Start</p>
-                                        <p className='text-[10px] font-normal'>8:31 AM</p>
-                                    </div>
-                                </div>
-
-                            <div className="w-9 h-0.5 relative bg-green-600 rounded-3xl" />
-
-                            <div className='flex gap-1 flex-col items-center mb-6'>
-                                <p className='text-[8px] pl-1.5 pr-2 py-px bg-red-50 rounded-2xl border text-red-900'>🚫 Full</p>
-                                <BusIcon/>
-                            </div>
-
-                            <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
-
-                             <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Brueni</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Arriving</p>
-                                        <p className='text-[10px] font-normal'>8:40 AM</p>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div className="self-stretch h-0  outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-                                              <div className='flex justify-between items-center w-full'>
-                                <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Main Library</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Start</p>
-                                        <p className='text-[10px] font-normal'>8:31 AM</p>
-                                    </div>
-                                </div>
-
-                            <div className="w-9 h-0.5 relative bg-green-600 rounded-3xl" />
-
-                            <div className='flex gap-1 flex-col items-center mb-6'>
-                                <p className='text-[8px] pl-1.5 pr-2 py-px bg-red-50 rounded-2xl border text-red-900'>🚫 Full</p>
-                                <BusIcon/>
-                            </div>
-
-                            <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
-
-                             <div className='flex flex-col'>
-                                    <p className='text-black text-xs'>Brueni</p>
-                                    <div className='flex gap-2'>
-                                        <p className='text-black/50 text-[10px] font-normal'>Arriving</p>
-                                        <p className='text-[10px] font-normal'>8:40 AM</p>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div className="self-stretch h-0 outline-1 outline-offset-[-0.50px] outline-black/10"></div>
-
-                          </section>
-                      </main> 
-
-                      )
-
-                      }          
+                            )}
+                            </section>
+                        </main>
+)}      
                      </section>
                 )}
 

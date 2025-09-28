@@ -57,6 +57,7 @@ interface Route {
 }
 
 interface Driver {
+  driverName: string;
   busID: string;
   active: boolean;
   busRoute: Route[];
@@ -82,6 +83,9 @@ const useDriversData = () => {
   const [busRoute, setBusRoute] = useState<Array<{ busID: string; busRoute: any[] }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+
+  
 
   useEffect(() => {
     const fetchDrivers = async () => {
@@ -482,26 +486,54 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff }) => {
           position={[bus.coords.latitude, bus.coords.longitude]}
           icon={createBusIcon(isClosest, heading)}
         >
-          <Popup>
-         
+<Popup>
+  <div className="p-2 min-w-[200px]">
+    <div className='w-10 h-10 bg-neutral-50 rounded-xl flex items-center justify-center mb-2'>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M14.68 11.2133L12.5933 6.33333C12.2133 5.43999 11.6467 4.93333 11 4.89999C10.36 4.86666 9.74 5.31333 9.26667 6.16666L8 8.43999C7.73333 8.91999 7.35333 9.20666 6.94 9.23999C6.52 9.27999 6.1 9.05999 5.76 8.62666L5.61333 8.43999C5.14 7.84666 4.55333 7.55999 3.95333 7.61999C3.35333 7.67999 2.84 8.09333 2.5 8.76666L1.34667 11.0667C0.933334 11.9 0.973334 12.8667 1.46 13.6533C1.94667 14.44 2.79333 14.9133 3.72 14.9133H12.2267C13.12 14.9133 13.9533 14.4667 14.4467 13.72C14.9533 12.9733 15.0333 12.0333 14.68 11.2133Z" fill="black" fillOpacity="0.5"/>
+        <path d="M4.64667 5.58668C5.89116 5.58668 6.90001 4.57783 6.90001 3.33335C6.90001 2.08887 5.89116 1.08002 4.64667 1.08002C3.40219 1.08002 2.39334 2.08887 2.39334 3.33335C2.39334 4.57783 3.40219 5.58668 4.64667 5.58668Z" fill="black" fillOpacity="0.5"/>
+      </svg>
+    </div>
+    
+    {/* Use actual driver data */}
+    <h3 className="font-bold text-lg">{bus.driverName || 'Unknown Driver'}</h3>
+    
+    <div className='flex gap-2 items-center justify-start mb-2'>
+      <p className="text-black/80 text-sm font-normal">{bus.busID}</p>
+      <div className='h-1 w-1 bg-black/10 rounded-full'/>
+      <p className="text-black/50 text-sm font-normal">
+        {bus.active ? '🟢 Active' : '🔴 Inactive'}
+      </p>
+    </div>
 
-              <div className='w-10 h-10 bg-neutral-50 rounded-xl flex items-center justify-center'>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M14.68 11.2133L12.5933 6.33333C12.2133 5.43999 11.6467 4.93333 11 4.89999C10.36 4.86666 9.74 5.31333 9.26667 6.16666L8 8.43999C7.73333 8.91999 7.35333 9.20666 6.94 9.23999C6.52 9.27999 6.1 9.05999 5.76 8.62666L5.61333 8.43999C5.14 7.84666 4.55333 7.55999 3.95333 7.61999C3.35333 7.67999 2.84 8.09333 2.5 8.76666L1.34667 11.0667C0.933334 11.9 0.973334 12.8667 1.46 13.6533C1.94667 14.44 2.79333 14.9133 3.72 14.9133H12.2267C13.12 14.9133 13.9533 14.4667 14.4467 13.72C14.9533 12.9733 15.0333 12.0333 14.68 11.2133Z" fill="black" fill-opacity="0.5"/>
-                  <path d="M4.64667 5.58668C5.89116 5.58668 6.90001 4.57783 6.90001 3.33335C6.90001 2.08887 5.89116 1.08002 4.64667 1.08002C3.40219 1.08002 2.39334 2.08887 2.39334 3.33335C2.39334 4.57783 3.40219 5.58668 4.64667 5.58668Z" fill="black" fill-opacity="0.5"/>
-                </svg>
-              </div>       
-                 
-              <h3 className="font-bold text-lg">Terry Crews</h3>
-            
-                <div className='flex gap-2 items-center justify-start '>
-                  <p className=" text-center justify-start text-black/80 text-sm font-normal ">055 094 1001</p>
-                  <div className='h-1 w-1 bg-black/10 rounded-b-full'/>
-                  <p className=" text-center justify-start text-black/50 text-sm font-normal ">AK - 4001- 25</p>
-                </div>
+    {/* Show route information if available */}
+          {bus.busRoute && bus.busRoute.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs text-black/60 font-medium">Route:</p>
+              <p className="text-xs text-black/70">
+                {Array.isArray(bus.busRoute[0]) 
+                  ? bus.busRoute[0].slice(0, 3).join(' → ') + (bus.busRoute[0].length > 3 ? '...' : '')
+                  : 'No route data'
+                }
+              </p>
+            </div>
+          )}
 
-        
-          </Popup>
+          {/* Show speed and heading if available */}
+          <div className="flex justify-between mt-2 text-xs">
+            {bus.coords.speed && bus.coords.speed > 0 && (
+              <span className="text-black/60">
+                Speed: {Math.round(bus.coords.speed * 3.6)} km/h
+              </span>
+            )}
+            {bus.coords.heading && bus.coords.heading !== -1 && (
+              <span className="text-black/60">
+                Heading: {Math.round(bus.coords.heading)}°
+              </span>
+            )}
+          </div>
+        </div>
+      </Popup>
         </Marker>
       );
     });
