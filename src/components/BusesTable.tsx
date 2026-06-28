@@ -1,4 +1,8 @@
 import React, { useState, useRef } from 'react';
+import { Plus, Bus, X, Image, Tag, User, CircleDashed, Signpost, DotsThree } from '@phosphor-icons/react';
+import StatusBadge from './StatusBadge';
+import { FilterBar } from './FilterBar';
+import DetailPanel, { type DetailPanelEntity } from './DetailPanel';
 
 interface Bus {
   id: string;
@@ -106,8 +110,18 @@ const BusTable: React.FC<BusTableProps> = ({
   onView = (bus: Bus) => console.log('View bus:', bus),
   onRemove = (bus: Bus) => console.log('Remove bus:', bus)
 }) => {
-  const buses = data;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const buses = data.filter((bus) => {
+    const matchesStatus = statusFilter === 'all' || bus.status === statusFilter;
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = q === '' || bus.busNumber.toLowerCase().includes(q) ||
+      bus.vehicleName.toLowerCase().includes(q) || bus.driverName.toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
+  });
 
   const [selectedBuses, setSelectedBuses] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -240,22 +254,7 @@ const BusTable: React.FC<BusTableProps> = ({
     }
   };
 
-  const getStatusBadge = (status: Bus['status']) => {
-    const statusConfig = {
-      Active: { bg: 'bg-green-50', text: 'text-green-700', outline: 'outline-green-200' },
-      Inactive: { bg: 'bg-gray-50', text: 'text-gray-700', outline: 'outline-gray-200' },
-      Maintenance: { bg: 'bg-yellow-50', text: 'text-yellow-700', outline: 'outline-yellow-200' }
-    };
-
-    const config = statusConfig[status];
-
-    return (
-      <div className={`pl-1.5 pr-2 py-0.5 rounded-2xl outline-1 outline-offset-[-1px] inline-flex justify-start items-center gap-1 ${config.bg} ${config.text} ${config.outline}`}>
-        <div className="w-2 h-2 rounded-full bg-current"></div>
-        <div className="text-center text-xs font-medium leading-none">{status}</div>
-      </div>
-    );
-  };
+  const [selectedBus, setSelectedBus] = useState<Bus | null>(null);
 
   const getOccupancyColor = (current: number, capacity: number) => {
     const percentage = (current / capacity) * 100;
@@ -267,7 +266,7 @@ const BusTable: React.FC<BusTableProps> = ({
   const BusAvatar: React.FC<{ bus: Bus; size?: 'sm' | 'md' | 'lg' }> = ({ bus, size = 'md' }) => {
     const sizeClasses = {
       sm: 'w-8 h-8',
-      md: 'w-10 h-10',
+      md: 'w-12 h-12',
       lg: 'w-16 h-16'
     };
 
@@ -283,18 +282,13 @@ const BusTable: React.FC<BusTableProps> = ({
 
     return (
       <div className={`${sizeClasses[size]} bg-green-100 rounded-lg flex items-center justify-center border border-green-200`}>
-        <svg xmlns="http://www.w3.org/2000/svg" width={size === 'lg' ? 24 : 20} height={size === 'lg' ? 24 : 20} viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="6" width="18" height="13" rx="2"/>
-          <path d="M7 11h10"/>
-          <circle cx="7" cy="16" r="1"/>
-          <circle cx="17" cy="16" r="1"/>
-        </svg>
+        <Bus size={size === 'lg' ? 24 : 20} color="#16a34a" weight="duotone" />
       </div>
     );
   };
 
   return (
-    <main className='w-[1123px] m-10 flex flex-col items-start justify-start rounded-xl border border-black/10 bg-white shadow-sm'>
+    <main className='w-full max-w-7xl mx-auto my-10 flex flex-col items-start justify-start rounded-xl border border-black/10 bg-white shadow-sm'>
       {/* Header */}
       <header className='px-6 py-5 items-center justify-between max-w-full border-b border-black/10 flex w-full'>
         <div className='flex items-center justify-center gap-2'>
@@ -308,43 +302,55 @@ const BusTable: React.FC<BusTableProps> = ({
           onClick={openModal}
           className='px-4 py-2 bg-green-600 rounded-lg inline-flex justify-center items-center text-white hover:bg-green-700 transition-colors duration-200 text-sm font-semibold'
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus size={16} weight="duotone" />
           Add New Bus
         </button>
       </header>
 
+      <FilterBar
+        searchPlaceholder="Search buses"
+        onSearch={setSearchQuery}
+        filterLabel={statusFilter === 'all' ? 'All Buses' : statusFilter}
+        filterOptions={[
+          { label: 'All Buses', value: 'all' },
+          { label: 'Active', value: 'Active' },
+          { label: 'Inactive', value: 'Inactive' },
+          { label: 'Maintenance', value: 'Maintenance' },
+        ]}
+        activeFilter={statusFilter}
+        onFilterChange={setStatusFilter}
+      />
+
       {/* Table Header */}
-      <section className='flex w-full items-center h-11 px-6 py-3 border-b border-black/10 justify-between bg-gray-50'>
-        <div className='flex gap-3 items-center w-80'>
+      <section className='grid grid-cols-[2fr_1.6fr_1fr_0.9fr_1.2fr_0.9fr] gap-6 items-center w-full px-6 py-3 border-b border-black/10 bg-gray-50'>
+        <div className='flex gap-3 items-center min-w-0'>
           <input
             type="checkbox"
             checked={selectedBuses.size === buses.length && buses.length > 0}
             onChange={toggleAllBuses}
             className="w-4 h-4 rounded border border-zinc-300 text-green-600 focus:ring-green-500"
           />
-          <p className="text-gray-600 text-xs font-semibold">Bus Details</p>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold text-left"><Bus size={12} />Bus Details</p>
         </div>
 
-        <div className='w-48'>
-          <p className="text-gray-600 text-xs font-semibold">Vehicle Name</p>
+        <div className='min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold text-left"><Tag size={12} />Vehicle Name</p>
         </div>
 
-        <div className='w-40'>
-          <p className="text-gray-600 text-xs font-semibold">Driver</p>
+        <div className='min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold text-left"><User size={12} />Driver</p>
         </div>
 
-        <div className='w-28'>
-          <p className="text-gray-600 text-xs font-semibold">Status</p>
+        <div className='min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold text-left"><CircleDashed size={12} />Status</p>
         </div>
 
-        <div className='w-40'>
-          <p className="text-gray-600 text-xs font-semibold">Route</p>
+        <div className='min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold text-left"><Signpost size={12} />Route</p>
         </div>
 
-        <div className='w-28'>
-          <p className="text-gray-600 text-xs font-semibold">Actions</p>
+        <div className='min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold text-left"><DotsThree size={12} />Actions</p>
         </div>
       </section>
 
@@ -352,9 +358,7 @@ const BusTable: React.FC<BusTableProps> = ({
       {buses.length === 0 ? (
         <div className="flex items-center justify-center py-12 w-full">
           <div className="text-center">
-            <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 6v6m7-6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3m4 4a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z" />
-            </svg>
+            <Bus size={64} className="mx-auto text-gray-400 mb-4" weight="duotone" />
             <p className="text-gray-900 text-base font-medium mb-1">No buses found</p>
             <p className="text-gray-500 text-sm mb-4">Get started by adding your first shuttle bus</p>
             <button 
@@ -367,11 +371,11 @@ const BusTable: React.FC<BusTableProps> = ({
         </div>
       ) : (
         buses.map((bus, index) => (
-          <section 
-            key={bus.id} 
-            className={`flex w-full items-center min-h-16 px-6 py-3 ${index < buses.length - 1 ? 'border-b border-black/10' : ''} justify-between hover:bg-gray-50 transition-colors duration-150`}
+          <section
+            key={bus.id}
+            className={`grid grid-cols-[2fr_1.6fr_1fr_0.9fr_1.2fr_0.9fr] gap-6 items-center w-full min-h-16 px-6 py-3 ${index < buses.length - 1 ? 'border-b border-black/10' : ''} hover:bg-gray-50 transition-colors duration-150`}
           >
-            <div className='flex gap-3 items-center w-80'>
+            <div className='flex gap-3 items-center min-w-0'>
               <input
                 type="checkbox"
                 checked={selectedBuses.has(bus.id)}
@@ -379,31 +383,35 @@ const BusTable: React.FC<BusTableProps> = ({
                 className="w-4 h-4 rounded border border-zinc-300 text-green-600 focus:ring-green-500"
               />
               <BusAvatar bus={bus} />
-              <div className="flex flex-col items-start">
-                <p className="text-gray-900 text-sm font-semibold">{bus.busNumber}</p>
-                <p className="text-gray-500 text-xs mt-0.5">{bus.lastUpdated}</p>
+              <div className="flex flex-col items-start min-w-0">
+                <p className="text-gray-900 text-base font-bold leading-none truncate w-full">{bus.busNumber}</p>
+                <p className="text-gray-400 text-sm mt-1.5 truncate w-full">{bus.lastUpdated}</p>
               </div>
             </div>
 
-            <div className='w-48'>
-              <p className="text-gray-900 text-sm font-medium">{bus.vehicleName}</p>
+            <div className='flex gap-2 items-center min-w-0'>
+              <BusAvatar bus={bus} size="sm" />
+              <div className="flex flex-col items-start min-w-0">
+                <p className="text-gray-900 text-sm font-semibold truncate w-full">{bus.vehicleName}</p>
+                <p className="text-gray-500 text-xs mt-0.5 truncate w-full">{bus.busNumber}</p>
+              </div>
             </div>
 
-            <div className='w-40'>
-              <p className="text-gray-900 text-sm font-medium">{bus.driverName}</p>
+            <div className='min-w-0'>
+              <p className="text-gray-900 text-sm font-medium truncate">{bus.driverName}</p>
             </div>
 
-            <div className='w-28'>
-              {getStatusBadge(bus.status)}
+            <div className='min-w-0'>
+              <StatusBadge status={bus.status} />
             </div>
 
-            <div className='w-40'>
-              <p className="text-gray-600 text-sm">{bus.route}</p>
+            <div className='min-w-0'>
+              <p className="text-gray-600 text-sm truncate">{bus.route}</p>
             </div>
 
-            <div className='flex gap-2 items-center w-28'>
-              <button 
-                onClick={() => onView(bus)}
+            <div className='flex gap-2 items-center min-w-0'>
+              <button
+                onClick={() => { setSelectedBus(bus); onView(bus); }}
                 className="text-blue-600 hover:text-blue-800 text-xs font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
               >
                 View
@@ -447,13 +455,8 @@ const BusTable: React.FC<BusTableProps> = ({
                   <h2 className="text-lg font-semibold text-gray-900 text-left">Add New Shuttle Bus</h2>
                   <p className="text-sm text-gray-600 mt-1 text-left">Enter the bus details</p>
                 </div>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <X size={24} weight="duotone" />
                 </button>
               </div>
             </div>
@@ -484,9 +487,7 @@ const BusTable: React.FC<BusTableProps> = ({
                       </div>
                     ) : (
                       <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <Image size={24} className="text-gray-400" weight="duotone" />
                       </div>
                     )}
                   </div>
@@ -636,6 +637,26 @@ const BusTable: React.FC<BusTableProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {selectedBus && (
+        <DetailPanel
+          entity={{
+            title: selectedBus.busNumber,
+            driverName: selectedBus.driverName,
+            driverId: selectedBus.id,
+            status: selectedBus.status,
+            timeCheckIn: '07:01AM',
+            lastUpdated: selectedBus.lastUpdated,
+            details: [
+              { label: 'Vehicle Number Plate', value: selectedBus.busNumber },
+              { label: 'Date Added', value: '25th Feb 2026' },
+              { label: 'Distance Covered', value: '420 km' },
+            ],
+            ctaLabel: 'Book Vehicle',
+          } satisfies DetailPanelEntity}
+          onClose={() => setSelectedBus(null)}
+        />
       )}
     </main>
   );

@@ -31,7 +31,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
           : "#34A853",
         border: "none",
         borderRadius: 20,
-        height: 55,
+        height: 48,
         padding: "0 24px",
         color: "#fff",
         fontSize: 16,

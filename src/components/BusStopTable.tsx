@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import { Plus, MapPin, X, Compass, UsersThree, CircleDashed, Bus, DotsThree } from '@phosphor-icons/react';
+import StatusBadge from './StatusBadge';
+import { FilterBar } from './FilterBar';
+import DetailPanel, { type DetailPanelEntity } from './DetailPanel';
 
 interface BusStop {
   id: number;
@@ -86,7 +90,15 @@ const CustomTable: React.FC<CustomTableProps> = ({
   onView = (stop: BusStop) => console.log('View stop:', stop),
   onRemove = (stop: BusStop) => console.log('Remove stop:', stop)
 }) => {
-  const busStops = data;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const busStops = data.filter((stop) => {
+    const matchesStatus = statusFilter === 'all' || stop.status === statusFilter;
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = q === '' || stop.name.toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
+  });
 
   const [selectedStops, setSelectedStops] = useState<Set<number>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -170,20 +182,7 @@ const CustomTable: React.FC<CustomTableProps> = ({
     }
   };
 
-  const getStatusBadge = (status: string, statusColor: 'green' | 'red' | 'yellow') => {
-    const colorClasses = {
-      green: 'bg-green-50 text-green-700 outline-green-200',
-      red: 'bg-red-50 text-red-700 outline-red-200',
-      yellow: 'bg-yellow-50 text-yellow-700 outline-yellow-200'
-    };
-
-    return (
-      <div className={`pl-1.5 pr-2 py-0.5 rounded-2xl  outline-1 outline-offset-[-1px] inline-flex justify-start items-center gap-1 ${colorClasses[statusColor]}`}>
-        <div className="w-2 h-2 rounded-full bg-current"></div>
-        <div className="text-center justify-start text-xs font-medium leading-none">{status}</div>
-      </div>
-    );
-  };
+  const [selectedStop, setSelectedStop] = useState<BusStop | null>(null);
 
   // const getStopIcon = (status: string, name: string) => {
   //   const iconColor = status === 'Active' ? 'bg-green-500' : 
@@ -207,13 +206,13 @@ const CustomTable: React.FC<CustomTableProps> = ({
   // Generate icon color based on stop name
   const getIconBackgroundColor = (name: string) => {
     const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-orange-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-teal-500'
+      'bg-blue-100 text-blue-700',
+      'bg-green-100 text-green-700',
+      'bg-purple-100 text-purple-700',
+      'bg-orange-100 text-orange-700',
+      'bg-pink-100 text-pink-700',
+      'bg-indigo-100 text-indigo-700',
+      'bg-teal-100 text-teal-700'
     ];
     const index = name.length % colors.length;
     return colors[index];
@@ -238,7 +237,7 @@ const CustomTable: React.FC<CustomTableProps> = ({
   };
 
   return (
-    <main className='w-[1123px] m-10 flex flex-col items-start justify-start rounded-xl border border-black/10 bg-white shadow-sm'>
+    <main className='w-full max-w-7xl mx-auto my-10 flex flex-col items-start justify-start rounded-xl border border-black/10 bg-white shadow-sm'>
       {/* Header */}
       <header className='px-6 py-5 items-center justify-between max-w-full border-b border-black/10 flex w-full'>
         <div className='flex items-center justify-center gap-2'>
@@ -252,43 +251,55 @@ const CustomTable: React.FC<CustomTableProps> = ({
           onClick={openModal}
           className='px-3 py-2 bg-green-600 rounded-lg inline-flex justify-center items-center text-white hover:bg-green-700 transition-colors duration-200 text-sm font-medium'
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus size={16} weight="duotone" />
           Create New {title.slice(0, -1)}
         </button>
       </header>
 
+      <FilterBar
+        searchPlaceholder="Search stops"
+        onSearch={setSearchQuery}
+        filterLabel={statusFilter === 'all' ? 'All Stops' : statusFilter}
+        filterOptions={[
+          { label: 'All Stops', value: 'all' },
+          { label: 'Active', value: 'Active' },
+          { label: 'Inactive', value: 'Inactive' },
+          { label: 'Maintenance', value: 'Maintenance' },
+        ]}
+        activeFilter={statusFilter}
+        onFilterChange={setStatusFilter}
+      />
+
       {/* Table Header */}
-      <section className='flex w-full items-center h-11 px-6 py-3 border-b border-black/10 justify-between bg-gray-50'>
-        <div className='flex gap-3 items-center w-64'>
+      <section className='grid grid-cols-[2fr_1.2fr_1fr_0.9fr_1fr_0.8fr] gap-6 items-center w-full px-6 py-3 border-b border-black/10 bg-gray-50'>
+        <div className='flex gap-3 items-center min-w-0'>
           <input
             type="checkbox"
             checked={selectedStops.size === busStops.length && busStops.length > 0}
             onChange={toggleAllStops}
             className="w-4 h-4 rounded border border-zinc-300 text-green-600 focus:ring-green-500"
           />
-          <p className="text-gray-600 text-xs font-semibold leading-none">Stop Name</p>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold leading-none text-left"><MapPin size={12} />Stop Name</p>
         </div>
 
-        <div className='flex gap-1 items-center w-32'>
-          <p className="text-gray-600 text-xs font-semibold leading-none">Coordinates</p>
+        <div className='flex gap-1 items-center min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold leading-none text-left"><Compass size={12} />Coordinates</p>
         </div>
 
-        <div className='flex gap-1 items-center w-24'>
-          <p className="text-gray-600 text-xs font-semibold leading-none">Crowd Size</p>
+        <div className='flex gap-1 items-center min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold leading-none text-left"><UsersThree size={12} />Crowd Size</p>
         </div>
 
-        <div className='flex gap-1 items-center w-24'>
-          <p className="text-gray-600 text-xs font-semibold leading-none">Status</p>
+        <div className='flex gap-1 items-center min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold leading-none text-left"><CircleDashed size={12} />Status</p>
         </div>
 
-        <div className='flex gap-1 items-center w-24'>
-          <p className="text-gray-600 text-xs font-semibold leading-none">Active Buses</p>
+        <div className='flex gap-1 items-center min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold leading-none text-left"><Bus size={12} />Active Buses</p>
         </div>
 
-        <div className='flex gap-1 items-center w-24'>
-          <p className="text-gray-600 text-xs font-semibold leading-none">Actions</p>
+        <div className='flex gap-1 items-center min-w-0'>
+          <p className="flex items-center gap-1 text-gray-600 text-xs font-semibold leading-none text-left"><DotsThree size={12} />Actions</p>
         </div>
       </section>
 
@@ -296,10 +307,7 @@ const CustomTable: React.FC<CustomTableProps> = ({
       {busStops.length === 0 ? (
         <div className="flex items-center justify-center py-12 w-full">
           <div className="text-center">
-            <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <MapPin size={48} className="mx-auto text-gray-400 mb-4" weight="duotone" />
             <p className="text-gray-500 text-sm">No bus stops found</p>
             <button 
               onClick={openModal}
@@ -314,66 +322,66 @@ const CustomTable: React.FC<CustomTableProps> = ({
           const { crowdLevel, crowdColor } = getCrowdSizeInfo(stop.crowdSize, stop.activeBuses);
           
           return (
-            <section 
-              key={stop.id} 
-              className={`flex w-full items-center min-h-16 px-6 py-3 justify-between ${index < busStops.length - 1 ? 'border-b border-black/10' : ''} ${
+            <section
+              key={stop.id}
+              className={`grid grid-cols-[2fr_1.2fr_1fr_0.9fr_1fr_0.8fr] gap-6 items-center w-full min-h-16 px-6 py-3 ${index < busStops.length - 1 ? 'border-b border-black/10' : ''} ${
                 index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
               } hover:bg-gray-100 transition-colors duration-150`}
             >
-              <div className='flex gap-3 items-center w-64'>
+              <div className='flex gap-3 items-center min-w-0'>
                 <input
                   type="checkbox"
                   checked={selectedStops.has(stop.id)}
                   onChange={() => toggleStop(stop.id)}
                   className="w-4 h-4 rounded border border-zinc-300 text-green-600 focus:ring-green-500"
                 />
-                <div className={`w-8 h-8 rounded-full ${getIconBackgroundColor(stop.name)} flex items-center justify-center text-white text-xs font-semibold`}>
+                <div className={`w-12 h-12 rounded-full ${getIconBackgroundColor(stop.name)} flex items-center justify-center text-base font-semibold shrink-0`}>
                   {stop.name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)}
                 </div>
-                <div className="flex flex-col items-start">
-                  <p className="text-gray-900 text-sm font-medium leading-none">{stop.name}</p>
-                  <p className="text-gray-500 text-xs mt-1">Stop ID: {stop.id.toString().padStart(3, '0')}</p>
+                <div className="flex flex-col items-start min-w-0">
+                  <p className="text-gray-900 text-base font-bold leading-none truncate w-full">{stop.name}</p>
+                  <p className="text-gray-400 text-sm mt-1.5 truncate w-full">Stop ID: {stop.id.toString().padStart(3, '0')}</p>
                 </div>
               </div>
 
-              <div className='flex gap-1 items-center w-32'>
-                <div className="flex flex-col">
-                  <p className="text-gray-600 text-xs font-mono">
+              <div className='flex gap-1 items-center min-w-0'>
+                <div className="flex flex-col min-w-0">
+                  <p className="text-gray-600 text-xs font-mono truncate">
                     {stop.latitude.toFixed(4)}, {stop.longitude.toFixed(4)}
                   </p>
-                  <button 
+                  <button
                     onClick={() => {
                       const url = `https://maps.google.com/?q=${stop.latitude},${stop.longitude}`;
                       window.open(url, '_blank');
                     }}
-                    className="text-blue-600 hover:text-blue-800 text-xs underline"
+                    className="text-blue-600 hover:text-blue-800 text-xs underline text-left"
                   >
                     View on Map
                   </button>
                 </div>
               </div>
 
-              <div className='flex gap-1 items-center w-24'>
-                <div className="flex flex-col">
-                  <p className="text-gray-600 text-sm leading-none font-medium">{stop.crowdSize}</p>
+              <div className='flex gap-1 items-center min-w-0'>
+                <div className="flex flex-col min-w-0">
+                  <p className="text-gray-600 text-sm leading-none font-medium truncate">{stop.crowdSize}</p>
                   <p className={`text-xs ${crowdColor}`}>{crowdLevel} density</p>
                 </div>
               </div>
 
-              <div className='flex gap-1 items-center w-24'>
-                {getStatusBadge(stop.status, stop.statusColor)}
+              <div className='flex gap-1 items-center min-w-0'>
+                <StatusBadge status={stop.status} />
               </div>
 
-              <div className='flex gap-1 items-center w-24'>
+              <div className='flex gap-1 items-center min-w-0'>
                 <div className="flex items-center gap-1">
-                  <p className="text-gray-600 text-sm leading-none font-medium">{stop.activeBuses}</p>
-              
+                  <p className="text-gray-600 text-sm leading-none font-medium truncate">{stop.activeBuses}</p>
+
                 </div>
               </div>
 
-              <div className='flex gap-2 items-center w-24'>
-                <button 
-                  onClick={() => onView(stop)}
+              <div className='flex gap-2 items-center min-w-0'>
+                <button
+                  onClick={() => { setSelectedStop(stop); onView(stop); }}
                   className="text-blue-600 hover:text-blue-800 text-xs font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
                 >
                   View
@@ -418,13 +426,8 @@ const CustomTable: React.FC<CustomTableProps> = ({
                   <h2 className="text-lg font-semibold text-gray-900 text-left">Add New Bus Stop</h2>
                   <p className="text-sm text-gray-600 mt-1 text-left">Enter the details for the new bus stop</p>
                 </div>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <X size={24} weight="duotone" />
                 </button>
               </div>
             </div>
@@ -541,6 +544,23 @@ const CustomTable: React.FC<CustomTableProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {selectedStop && (
+        <DetailPanel
+          entity={{
+            title: selectedStop.name,
+            driverName: selectedStop.name,
+            driverId: `Stop ID: ${selectedStop.id.toString().padStart(3, '0')}`,
+            status: selectedStop.status,
+            details: [
+              { label: 'Coordinates', value: `${selectedStop.latitude.toFixed(4)}, ${selectedStop.longitude.toFixed(4)}` },
+              { label: 'Crowd Size', value: selectedStop.crowdSize },
+              { label: 'Active Buses', value: selectedStop.activeBuses },
+            ],
+          } satisfies DetailPanelEntity}
+          onClose={() => setSelectedStop(null)}
+        />
       )}
     </main>
   );

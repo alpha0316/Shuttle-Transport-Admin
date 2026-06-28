@@ -1,7 +1,12 @@
 
 import './../App.css'
 import { useState, useEffect, useRef, useMemo } from 'react';
-import MapGL from './../components/map'
+import { House, ShieldCheck, MagnifyingGlass, X } from '@phosphor-icons/react';
+import MapGL, { type Driver as MapDriver } from './../components/map'
+import TopHeader from './../components/TopHeader'
+import DetailPanel, { type DetailPanelEntity } from './../components/DetailPanel'
+import { MOCK_MAP_BUSES } from '../mockData/index';
+import { setPrefillVehicle, triggerBookingForm, triggerExpenseForm } from '../lib/prefill';
 // import ErrorBoundary from './components/ErrorBoundary';
 // import { useNavigate } from 'react-router-dom';
 import { useShuttleSocket } from '../../hooks/useShuttleSocket';
@@ -258,6 +263,7 @@ function App() {
     const [dropoffInputValue, setDropoffInputValue] = useState('');
      const [busRoute, setBusRoute] = useState([])
      const [drivers, setDrivers] = useState<Driver[]>([]);
+     const [selectedMapBus, setSelectedMapBus] = useState<MapDriver | null>(null);
 
 
      const shuttles = useShuttleSocket();
@@ -441,7 +447,7 @@ function App() {
                 return (
                     <div
                     ref={wrapperRef}
-                    className="rounded-lg flex flex-col p-3 gap-3 overflow-y-auto max-h-[80vh] md:max-h-[calc(95vh-220px)] w-[360px]"
+                    className="rounded-lg flex flex-col p-3 gap-3 overflow-y-auto max-h-[80vh] md:max-h-[calc(95vh-220px)] w-full max-w-[360px]"
                     >
                 {filteredLocations.length === 0 && searchQuery.trim() !== '' ? (
                     <p>No Bus stop found. Select closest bus stop</p>
@@ -887,46 +893,13 @@ function App() {
     <>
       <main className='flex '>
           <section className='flex flex-col w-full '>
-              <nav className='flex items-center justify-space px-8 h-14 border-b border-black/10 w-full'>
-                <nav className='flex items-center px-2 py-1 gap-2 rounded w-full'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="15" viewBox="0 0 14 15" fill="none">
-                      <path d="M12.8333 5.47002V2.82169C12.8333 1.99919 12.46 1.66669 11.5325 1.66669H9.17583C8.24833 1.66669 7.875 1.99919 7.875 2.82169V5.46419C7.875 6.29252 8.24833 6.61919 9.17583 6.61919H11.5325C12.46 6.62502 12.8333 6.29252 12.8333 5.47002Z" fill="black"/>
-                      <path d="M12.8333 12.0325V9.67583C12.8333 8.74833 12.46 8.375 11.5325 8.375H9.17583C8.24833 8.375 7.875 8.74833 7.875 9.67583V12.0325C7.875 12.96 8.24833 13.3333 9.17583 13.3333H11.5325C12.46 13.3333 12.8333 12.96 12.8333 12.0325Z" fill="black"/>
-                      <path d="M6.12501 5.47002V2.82169C6.12501 1.99919 5.75167 1.66669 4.82417 1.66669H2.46751C1.54001 1.66669 1.16667 1.99919 1.16667 2.82169V5.46419C1.16667 6.29252 1.54001 6.61919 2.46751 6.61919H4.82417C5.75167 6.62502 6.12501 6.29252 6.12501 5.47002Z" fill="black"/>
-                      <path d="M6.12501 12.0325V9.67583C6.12501 8.74833 5.75167 8.375 4.82417 8.375H2.46751C1.54001 8.375 1.16667 8.74833 1.16667 9.67583V12.0325C1.16667 12.96 1.54001 13.3333 2.46751 13.3333H4.82417C5.75167 13.3333 6.12501 12.96 6.12501 12.0325Z" fill="black"/>
-                    </svg>
-                    <p className='text-black text-sm font-normal' >Dashboard</p>
-                  </nav>
-
-
-                    <aside className='flex items-center gap-4 justify-center'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-                        <path d="M19.3399 14.99L18.3399 13.33C18.1299 12.96 17.9399 12.26 17.9399 11.85V9.32C17.9399 6.97 16.5599 4.94 14.5699 3.99C14.0499 3.07 13.0899 2.5 11.9899 2.5C10.8999 2.5 9.91994 3.09 9.39994 4.02C7.44994 4.99 6.09994 7 6.09994 9.32V11.85C6.09994 12.26 5.90994 12.96 5.69994 13.32L4.68994 14.99C4.28994 15.66 4.19994 16.4 4.44994 17.08C4.68994 17.75 5.25994 18.27 5.99994 18.52C7.93994 19.18 9.97994 19.5 12.0199 19.5C14.0599 19.5 16.0999 19.18 18.0399 18.53C18.7399 18.3 19.2799 17.77 19.5399 17.08C19.7999 16.39 19.7299 15.63 19.3399 14.99Z" fill="black" fill-opacity="0.5"/>
-                        <path d="M14.8301 20.51C14.4101 21.67 13.3001 22.5 12.0001 22.5C11.2101 22.5 10.4301 22.18 9.88005 21.61C9.56005 21.31 9.32005 20.91 9.18005 20.5C9.31005 20.52 9.44005 20.53 9.58005 20.55C9.81005 20.58 10.0501 20.61 10.2901 20.63C10.8601 20.68 11.4401 20.71 12.0201 20.71C12.5901 20.71 13.1601 20.68 13.7201 20.63C13.9301 20.61 14.1401 20.6 14.3401 20.57C14.5001 20.55 14.6601 20.53 14.8301 20.51Z" fill="black" fill-opacity="0.5"/>
-                      </svg>
-
-                      <div className='flex items-center gap-8'>
-                          <div className='flex items-center gap-2 '>
-                              <div className="w-6 h-6 p-1 bg-green-600 rounded-[40px] inline-flex flex-col justify-center items-center gap-2.5">
-                                  <div className="justify-center text-white text-xs font-bold">E</div>
-                              </div>
-                              <p className='text-black/80 text-xs'>Essandoh</p>
-                          </div>
-
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
-                            <path d="M8 10.5C9.10457 10.5 10 9.60457 10 8.5C10 7.39543 9.10457 6.5 8 6.5C6.89543 6.5 6 7.39543 6 8.5C6 9.60457 6.89543 10.5 8 10.5Z" stroke="black" stroke-opacity="0.6" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M1.33337 9.08667V7.91333C1.33337 7.22 1.90004 6.64667 2.60004 6.64667C3.80671 6.64667 4.30004 5.79333 3.69337 4.74667C3.34671 4.14667 3.55337 3.36667 4.16004 3.02L5.31337 2.36C5.84004 2.04666 6.52004 2.23333 6.83337 2.76L6.90671 2.88666C7.50671 3.93333 8.49337 3.93333 9.10004 2.88666L9.17337 2.76C9.48671 2.23333 10.1667 2.04666 10.6934 2.36L11.8467 3.02C12.4534 3.36667 12.66 4.14667 12.3134 4.74667C11.7067 5.79333 12.2 6.64667 13.4067 6.64667C14.1 6.64667 14.6734 7.21333 14.6734 7.91333V9.08667C14.6734 9.78 14.1067 10.3533 13.4067 10.3533C12.2 10.3533 11.7067 11.2067 12.3134 12.2533C12.66 12.86 12.4534 13.6333 11.8467 13.98L10.6934 14.64C10.1667 14.9533 9.48671 14.7667 9.17337 14.24L9.10004 14.1133C8.50004 13.0667 7.51337 13.0667 6.90671 14.1133L6.83337 14.24C6.52004 14.7667 5.84004 14.9533 5.31337 14.64L4.16004 13.98C3.55337 13.6333 3.34671 12.8533 3.69337 12.2533C4.30004 11.2067 3.80671 10.3533 2.60004 10.3533C1.90004 10.3533 1.33337 9.78 1.33337 9.08667Z" stroke="black" stroke-opacity="0.6" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                          
-                      </div>
-              </aside>
-              </nav>
+              <TopHeader icon={<House size={14} color="black" weight="duotone" />} title="Overview" />
 
               <main className='flex'>
 
-                <section className='w-[850px] h-190 bg-black/60'>
+                <section className='flex-1 min-w-0 h-[calc(100vh-56px)] overflow-hidden relative'>
 
-                <MapGL 
+                <MapGL
                 //    locations={locations}
                   pickUp={pickUp}
                   // setPickUp={setPickUp}
@@ -934,338 +907,51 @@ function App() {
                   // setDropOff={setDropOff}
                   // isSelectingDropOff={isSelectingDropOff}
                   // setIsSelectingDropOff={setIsSelectingDropOff}
-                /> 
+                   onSelectBus={(bus) => {
+                     setSelectedMapBus(bus);
+                     const mock = MOCK_MAP_BUSES.find(m => m.busID === bus.busID);
+                     if (mock?.plateNumber) setPrefillVehicle(mock.plateNumber);
+                   }}
+                />
+
+                {selectedMapBus && (() => {
+                    const mockBus = MOCK_MAP_BUSES.find(b => b.busID === selectedMapBus.busID);
+                    const plateNo = mockBus?.plateNumber || selectedMapBus.busID;
+                    const driverName = selectedMapBus.driverName || selectedMapBus.fullName || mockBus?.driverName || 'Unknown Driver';
+                    const speedKmh = Math.round((selectedMapBus.coords.speed ?? 0) * 3.6);
+                    return (
+                      <DetailPanel
+                        entity={{
+                          title: plateNo,
+                          driverName,
+                          driverId: mockBus?.driverID,
+                          driverPhone: mockBus?.phoneNumber,
+                          status: selectedMapBus.active ? 'Active' : 'Inactive',
+                          timeCheckIn: '07:01 AM',
+                          lastUpdated: new Date(selectedMapBus.coords.timestamp ?? Date.now()).toLocaleTimeString(),
+                          details: [
+                            { label: 'Vehicle Number Plate', value: plateNo },
+                            { label: 'Date Added', value: '25th Feb 2026' },
+                            { label: 'Distance Covered', value: '420 km' },
+                            { label: 'Speed', value: `${speedKmh} km/h` },
+                          ],
+                          ctaLabel: 'Book Vehicle',
+                        } satisfies DetailPanelEntity}
+                        onClose={() => setSelectedMapBus(null)}
+                        variant="vehicle"
+                        size="wide"
+                        onBookVehicle={() => {
+                          if (selectedMapBus) { setPrefillVehicle(selectedMapBus.busID); triggerBookingForm(); }
+                        }}
+                        onLogExpense={() => {
+                          if (selectedMapBus) { setPrefillVehicle(selectedMapBus.busID); triggerExpenseForm(); }
+                        }}
+                      />
+                    );
+                  })()}
 
                 </section>
 
-                <aside className='flex flex-col py-4 gap-4 w-90'>
-                <header className='text-base font-bold px-4 border-b pb-4 border-black/10 w-[100%] items-start text-left'>Activity Feed</header>
-
-
-                <div className="flex flex-col gap-3 p-3 rounded-2xl bg-gray-50 items-start mx-3 w-80">
-                    <div className="flex flex-col gap-2 items-start w-full">
-                        <p className="text-[14px] text-[rgba(0,0,0,0.5)]">Starting Point</p>
-
-                        <div className="flex items-center gap-2 w-full">
-                        <div
-                            className={`
-                            w-10 h-8               
-                            flex items-center justify-center  
-                            rounded-full           
-                            border border-dashed    
-                            ${pickUp ? 'border-black bg-black' : 'border-black/80 bg-white'}
-                            `}
-                        >
-                            {pickUp ? (
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                            >
-                                <path
-                                d="M20.6201 8.45C19.5701 3.83 15.5401 1.75 12.0001 1.75C12.0001 1.75 12.0001 1.75 11.9901 1.75C8.4601 1.75 4.4201 3.82 3.3701 8.44C2.2001 13.6 5.3601 17.97 8.2201 20.72C9.2801 21.74 10.6401 22.25 12.0001 22.25C13.3601 22.25 14.7201 21.74 15.7701 20.72C18.6301 17.97 21.7901 13.61 20.6201 8.45ZM12.0001 13.46C10.2601 13.46 8.8501 12.05 8.8501 10.31C8.8501 8.57 10.2601 7.16 12.0001 7.16C13.7401 7.16 15.1501 8.57 15.1501 10.31C15.1501 12.05 13.7401 13.46 12.0001 13.46Z"
-                                fill="white"
-                                fill-opacity="1"
-                                />
-                            </svg>
-                            ) : (
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                            >
-                                <path
-                                d="M20.6201 8.45C19.5701 3.83 15.5401 1.75 12.0001 1.75C12.0001 1.75 12.0001 1.75 11.9901 1.75C8.4601 1.75 4.4201 3.82 3.3701 8.44C2.2001 13.6 5.3601 17.97 8.2201 20.72C9.2801 21.74 10.6401 22.25 12.0001 22.25C13.3601 22.25 14.7201 21.74 15.7701 20.72C18.6301 17.97 21.7901 13.61 20.6201 8.45ZM12.0001 13.46C10.2601 13.46 8.8501 12.05 8.8501 10.31C8.8501 8.57 10.2601 7.16 12.0001 7.16C13.7401 7.16 15.1501 8.57 15.1501 10.31C15.1501 12.05 13.7401 13.46 12.0001 13.46Z"
-                                fill="black"
-                                fill-opacity="0.6"
-                                />
-                            </svg>
-                            )}
-                        </div>
-
-                        <div
-                            className={`flex px-3 py-2 gap-2 bg-white rounded-[16px] items-center border ${
-                            pickUp ? 'border-black/80' : 'border-black/40'
-                            } w-full`}
-                        >
-                            <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            >
-                            <path
-                                d="M20.031 20.79C20.491 21.25 21.201 20.54 20.741 20.09L16.991 16.33C18.3064 14.8745 19.0336 12.9818 19.031 11.02C19.031 6.63 15.461 3.06 11.071 3.06C6.681 3.06 3.111 6.63 3.111 11.02C3.111 15.41 6.681 18.98 11.071 18.98C13.051 18.98 14.881 18.25 16.281 17.04L20.031 20.79ZM4.11 11.02C4.11 7.18 7.24 4.06 11.07 4.06C14.91 4.06 18.03 7.18 18.03 11.02C18.03 14.86 14.91 17.98 11.07 17.98C7.24 17.98 4.11 14.86 4.11 11.02Z"
-                                fill="black"
-                                fillOpacity="0.6"
-                            />
-                            </svg>
-                          <input
-                                type="text"
-                                placeholder="Select Pickup Bus Stop"
-                                value={pickupInputValue}
-                                onChange={(e) => handleSearch(e, 'pickup')}
-                                  onFocus={() => {
-                                        handleInputFocus(false); // for pickup
-                                    }}
-                                onBlur={handleInputBlur}
-                                onKeyPress={handleKeyPress}
-                                className={`flex-1 border-none bg-transparent text-[14px] ${pickUp ? 'text-black' : 'text-black/60'} outline-none p-0 transition-all duration-300 touch-manipulation`}
-                            />
-
-                            {pickUp ? (
-                                <svg
-                                    onClick={handleClearPickUp}
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                >
-                                    <path
-                                    d="M4.26671 12.6666L3.33337 11.7333L7.06671 7.99992L3.33337 4.26659L4.26671 3.33325L8.00004 7.06659L11.7334 3.33325L12.6667 4.26659L8.93337 7.99992L12.6667 11.7333L11.7334 12.6666L8.00004 8.93325L4.26671 12.6666Z"
-                                    fill="#1D1B20"
-                                    />
-                                </svg>
-                                ) : (
-                                <svg
-                                    onClick={handleClearPickUpAndShowTabs}
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                >
-                                    <path
-                                    d="M4.26671 12.6666L3.33337 11.7333L7.06671 7.99992L3.33337 4.26659L4.26671 3.33325L8.00004 7.06659L11.7334 3.33325L12.6667 4.26659L8.93337 7.99992L12.6667 11.7333L11.7334 12.6666L8.00004 8.93325L4.26671 12.6666Z"
-                                    fill="rgba(0,0,0,0.4)"
-                                    />
-                                </svg>
-                                )}
-                        </div>
-                        </div>
-                    </div>
-
-                      <div style={{
-                            width : 0.1,
-                            height : 20,
-                            border : pickUp? '1px dashed rgba(0,0,0,1)' : '1px dashed rgba(0,0,0,0.2)',
-                            position : 'relative',
-                            left : '6%',
-                            display : pickUp ? 'flex' : 'none' ,
-                            // display : inputFocused? 'none' : 'block'
-                            
-                        }}></div>
-
-                    
-                        <div style={{
-                            display : pickUp ? 'flex' : 'none' ,
-                            flexDirection : 'column',
-                            gap : 8
-                        }}>
-                            <p style={{
-                            margin : 0,
-                            fontSize : 14,
-                            color : 'rgba(0,0,0,0.5)',
-                            textAlign : 'left'
-                            }} >Drop Off Point</p>
-
-                            <div style={{
-                            display : 'flex',
-                            alignItems : 'center',
-                            gap : 8,
-                            // justifyContent : 'space-between'
-                            }}>
-
-                            <div style={{
-                                width : 40,
-                                height : 40,
-                                display : 'flex',
-                                alignItems : 'center',
-                                borderRadius : 50,
-                                border : '1px dashed rgba(0,0,0,0.1)',
-                                justifyContent : 'center',
-                                backgroundColor: '#ffff',
-                            }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                <path d="M20.6202 8.7C19.5802 4.07 15.5402 2 12.0002 2C12.0002 2 12.0002 2 11.9902 2C8.46024 2 4.43024 4.07 3.38024 8.69C2.20024 13.85 5.36024 18.22 8.22024 20.98C9.28024 22 10.6402 22.51 12.0002 22.51C13.3602 22.51 14.7202 22 15.7702 20.98C18.6302 18.22 21.7902 13.86 20.6202 8.7ZM15.2802 9.53L11.2802 13.53C11.1302 13.68 10.9402 13.75 10.7502 13.75C10.5602 13.75 10.3702 13.68 10.2202 13.53L8.72024 12.03C8.43024 11.74 8.43024 11.26 8.72024 10.97C9.01024 10.68 9.49024 10.68 9.78024 10.97L10.7502 11.94L14.2202 8.47C14.5102 8.18 14.9902 8.18 15.2802 8.47C15.5702 8.76 15.5702 9.24 15.2802 9.53Z" fill="black" fill-opacity="0.6"/>
-                                </svg>
-                            </div>
-
-                            <div style={{
-                                display: 'flex',
-                                paddingInline: 16,
-                                paddingBlock: 12,
-                                gap: 8,
-                                backgroundColor: '#fff',
-                                borderRadius: 16,
-                                alignItems: 'center',
-                                border: '1px solid rgba(0,0,0,0.1)',
-                                width : '90%'
-                            }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M20.031 20.79C20.491 21.25 21.201 20.54 20.741 20.09L16.991 16.33C18.3064 14.8745 19.0336 12.9818 19.031 11.02C19.031 6.63 15.461 3.06 11.071 3.06C6.681 3.06 3.111 6.63 3.111 11.02C3.111 15.41 6.681 18.98 11.071 18.98C13.051 18.98 14.881 18.25 16.281 17.04L20.031 20.79ZM4.11 11.02C4.11 7.18 7.24 4.06 11.07 4.06C14.91 4.06 18.03 7.18 18.03 11.02C18.03 14.86 14.91 17.98 11.07 17.98C7.24 17.98 4.11 14.86 4.11 11.02Z" fill="black" fillOpacity="0.6" />
-                                </svg>
-                                <input
-                                type="text"
-                                placeholder="Select Drop Off Bus Stop"
-                                value={dropOff?.name}
-                                onChange={dropoffInputValue || searchQuery}
-                                onFocus={handleInputFocus}
-                                onBlur={handleInputBlur}
-                                style={{
-                                    flex: 1,
-                                    border: 'none',
-                                    backgroundColor: 'transparent',
-                                    fontSize: 14,
-                                    color: dropOff? 'black'  : 'rgba(0,0,0,0.6)',
-                                    outline: 'none',
-                                    padding: 0
-                                }}
-                                />
-                                { dropOff ? 
-                                <svg onClick={handleClearDropOff} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M4.26671 12.6666L3.33337 11.7333L7.06671 7.99992L3.33337 4.26659L4.26671 3.33325L8.00004 7.06659L11.7334 3.33325L12.6667 4.26659L8.93337 7.99992L12.6667 11.7333L11.7334 12.6666L8.00004 8.93325L4.26671 12.6666Z" fill="#1D1B20"/>
-                                </svg>
-                                : 
-                                <svg onClick={handleClearPickUp} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M4.26671 12.6666L3.33337 11.7333L7.06671 7.99992L3.33337 4.26659L4.26671 3.33325L8.00004 7.06659L11.7334 3.33325L12.6667 4.26659L8.93337 7.99992L12.6667 11.7333L11.7334 12.6666L8.00004 8.93325L4.26671 12.6666Z" fill="rgba(0,0,0,0.4)"/>
-                                </svg>
-                                }
-                                </div>  
-
-                            </div>
-                        </div>
-                </div>
-
-                {/* <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] outline-black/10"></div>      */}
-                
-
-               { showLocationList    && (
-                    <div style={{ flex: '1', minWidth: '100px', maxWidth: '500px', maxHeight: "100px" }}>
-                    <LocationList 
-                        selectedLocation={selectedLocation}
-                        locations={locations}
-                        isSelectingDropOff={isSelectingDropOff}
-                        handleDropOffPointClick={handleDropOffPointClick}
-                        handleStartPointClick={handleStartPointClick} searchQuery={''} isMobile={false}                    
-                    />
-                    </div>
-               )}
-                
-
-
-                { !showLocationList  && (
-                    <section className='flex flex-col gap-4'>
-                      <header className='flex items-center w-full justify-between border-b border-black/10'>
-                        <button 
-                            className={`flex items-center w-full justify-center pb-2 text-sm font-normal ${activeTab === 'busStops' ? 'text-green-600 border-b-2 border-green-600' : 'text-black/50 hover:text-black/80 '}`}
-                            onClick={() => setActiveTab('busStops')}
-                        >
-                            Bus Stops
-                        </button>
-                        <button 
-                            className={`flex items-center w-full justify-center pb-2 text-sm font-normal ${activeTab === 'buses' ? 'text-green-600 border-b-2 border-green-600' : 'text-black/50 hover:text-black/80 '}`}
-                            onClick={() => setActiveTab('buses')}
-                        >
-                            Buses
-                        </button>
-                      </header>
-
-                      {/* Bus Stops */}
-                     {activeTab === 'busStops' && (
-                        <main className="flex flex-col gap-4 items-start justify-start px-5 w-full overflow-y-auto md:max-h-[calc(90vh-220px)]">
-                            <p className="text-black text-base font-bold">Bus Stop Overview</p>
-
-                            <section className="flex flex-col gap-2 w-full">
-                            {filteredBusStops.map((stop) => (
-                                <BusStopCard
-                                key={stop.id}
-                                name={stop.name}
-                                color={stop.color}
-                                dotColor={stop.dotColor}
-                                waiting={stop.waiting}
-                                />
-                            ))}
-                            </section>
-                        </main>
-                        )}
-
-
-
-
-                      {/* Buses*/}
-                     {activeTab === 'buses' && (
-                        <main className='flex flex-col gap-2 items-start justify-start px-5 w-full'>
-                            <p className='text-black text-base font-bold'>Active Buses</p>
-
-                            <section className='flex flex-col gap-4 w-full'>
-                            {drivers
-                                .filter(driver => driver.active) // Only show active drivers
-                                .map((driver, index) => {
-                                const busRoute = driver.busRoute?.[0];
-                                const stops = busRoute?.stops || [];
-                                const startStop = stops[0] || 'Unknown';
-                                const endStop = stops[stops.length - 4 ] || 'Unknown';
-                                
-                                // Generate crowd density status (you can replace this with real data later)
-                                const crowdDensity = Math.random() > 0.5 ? '🚫 Full' : '🟢 Available';
-                                const crowdColor = crowdDensity === '🚫 Full' ? 'bg-red-50 text-red-900 border border-red-50' : 'bg-green-50 text-green-900 border border-green-50';
-   
-                                return (
-                                    <div key={driver.busID || driver.driverID || index}>
-                                    <div className='flex justify-between items-center w-full'>
-                                    
-                                        <p className='text-black text-xs'>{startStop}</p>
-                               
-
-                                        <div className="w-9 h-0.5 relative bg-green-600 rounded-3xl" />
-
-                                        <div className='flex gap-1 flex-col items-start mb-5'>
-                                        <p className={`text-[8px] pl-1.5 pr-2 py-px ${crowdColor} rounded-2xl border`}>
-                                            {crowdDensity}
-                                        </p>
-                                        <div className="flex items-center gap-1">
-                                            <BusIcon />
-                                           
-                                        </div>
-                                        </div>
-
-                                        <div className="w-8 h-1 relative bg-gray-300 rounded-3xl" />
-
-                                        <div className='flex flex-col'>
-                                        <p className='text-black text-xs'>{endStop}</p>
-                                     
-                                        </div>
-                                    </div>
-
-                                 
-
-                                  
-
-                                    </div>
-                                );
-                                })}
-                            
-                            {/* Show message if no active buses */}
-                            {drivers.filter(driver => driver.active).length === 0 && (
-                                <div className="text-center py-8 text-black/50">
-                                <p className="text-sm">No active buses at the moment</p>
-                                <p className="text-xs mt-1">Check back later for updates</p>
-                                </div>
-                            )}
-                            </section>
-                        </main>
-)}      
-                     </section>
-                )}
-
-                </aside>
               </main>
           </section>
       </main>

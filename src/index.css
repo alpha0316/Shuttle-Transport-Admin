@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "SF Pro Text", "SF Pro Display", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, monospace;
+}
+
+/* SF Pro Text is a system font on Apple devices.
+   On other platforms, it falls back to system-ui / Inter / Segoe UI */
