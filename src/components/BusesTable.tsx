@@ -256,12 +256,6 @@ const BusTable: React.FC<BusTableProps> = ({
 
   const [selectedBus, setSelectedBus] = useState<Bus | null>(null);
 
-  const getOccupancyColor = (current: number, capacity: number) => {
-    const percentage = (current / capacity) * 100;
-    if (percentage >= 90) return 'text-red-600 bg-red-50';
-    if (percentage >= 70) return 'text-yellow-600 bg-yellow-50';
-    return 'text-green-600 bg-green-50';
-  };
 
   const BusAvatar: React.FC<{ bus: Bus; size?: 'sm' | 'md' | 'lg' }> = ({ bus, size = 'md' }) => {
     const sizeClasses = {

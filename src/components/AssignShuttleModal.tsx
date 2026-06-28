@@ -53,7 +53,6 @@ export function AssignShuttleModal({ open, onClose, onAssign, currentVehicle }: 
             <p className="text-sm text-black/40 text-center py-8">No available vehicles found.</p>
           ) : (
             filtered.map((v) => {
-              const isCurrent = v.plateNumber === currentVehicle;
               return (
                 <button
                   key={v.id}

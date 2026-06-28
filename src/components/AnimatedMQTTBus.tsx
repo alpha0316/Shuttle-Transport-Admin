@@ -100,7 +100,7 @@ export const AnimatedMQTTBus = memo(({
   const currentRef = useRef<SmoothState>({ lat: latitude, lng: longitude, heading: heading % 360 });
   const startRef = useRef<SmoothState>({ lat: latitude, lng: longitude, heading: heading % 360 });
   const startTimeRef = useRef<number>(0);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | undefined>(undefined);
   const [displayPos, setDisplayPos] = useState<SmoothState>({ lat: latitude, lng: longitude, heading: heading % 360 });
 
   useEffect(() => {

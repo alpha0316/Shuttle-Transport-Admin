@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import './../App.css'
 import { UserCircle, Bell, Gear } from '@phosphor-icons/react';
 
@@ -130,58 +131,21 @@ function App() {
     },
   ];
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [, setFilteredLocations] = useState<Location[]>(locations);
-    const [, setSelectedLocation] = useState<Location | null>(null)
-    const [pickUp, setpickUp] =  useState<Location | null>(null)
-    const [dropOff, setDropOff] =  useState<Location | null>(null)
-    const [isSelectingDropOff, setIsSelectingDropOff] = useState(false)
-    const [pickUpDetails, setpickUpDetail] =  useState<Location | null>(null)
-    const [, setInputFocused] = useState(false);
-    const [dropDown, setDropDown] = useState(true)
+    const [] = useState('');
+    const [] = useState<Location[]>(locations);
+    const [] = useState<Location | null>(null)
+    const [] =  useState<Location | null>(null)
+    const [] =  useState<Location | null>(null)
+    const [] = useState(false)
+    const [] =  useState<Location | null>(null)
+    const [] = useState(false);
+    const [] = useState(true)
     
 
 
 
-        const handleClearPickUp = () => {
-          setpickUp(null);
-          setpickUpDetail(null);
-          setFilteredLocations(locations);
-          setSearchQuery('');
-          setIsSelectingDropOff(false);
-          setSelectedLocation(null);
-          // setPickUpCoordinates(null);
-        }
 
-        const handleClearDropOff = () => {
-          setDropOff(null);
-          // setdropOffDetail(null);
-          setFilteredLocations(locations);
-          setSearchQuery('');
-          setIsSelectingDropOff(false);
-          setSelectedLocation(null);
-          // setPickUpCoordinates(null);
-        }
 
-        const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-          const searchQuery = event.target.value;
-          setSearchQuery(searchQuery);
-
-          if (searchQuery === '') {
-            setFilteredLocations(locations);
-          } else if (isSelectingDropOff && pickUp) {
-            const validDropOffPoints = locations.filter((location) =>
-              location.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-              pickUpDetails?.dropPoints.some(dp => dp.name === location.name)
-            );
-            setFilteredLocations(validDropOffPoints);
-          } else {
-            const filterData = locations.filter((location) =>
-              location.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setFilteredLocations(filterData);
-          }
-        };
 
 
 
@@ -205,33 +169,8 @@ function App() {
           //   }
           // };
 
-          const handleInputFocus = () => {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-
-            if (!dropDown) {
-              setDropDown(true); 
-            }
-            setInputFocused(true); 
-          };
           
-          const handleInputBlur = () => {
 
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-
-            setInputFocused(false);
-            if (!pickUp && !dropOff) {
-              setDropDown(true); 
-            }
-          };
-
-          const handleKeyPress = (event : any) => {
-            if (event.key === 'Enter') {
-              setInputFocused(false);
-              // console.log(inputFocused)
-            }
-          };
 
 
 

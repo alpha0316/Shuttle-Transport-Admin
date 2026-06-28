@@ -17,7 +17,6 @@ export function VehicleHoverCard({
   phone,
   routeFrom = 'Start',
   routeTo = 'Destination',
-  progress = 50,
   photoUrl,
   x = 0,
   y = 0,
