@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, useMemo, memo, type MouseEvent } from 'react';
+import { useState, useEffect, useRef, memo, type MouseEvent } from 'react';
 import { Marker, useMap } from 'react-map-gl';
-import { buildRouteDistances, projectToRoute, getPositionAtDistance, normalizeRouteCoords, type RouteCoord } from '../utils/routeProjection';
 import BusIcon from './icons/BusIcon';
 
 // ── Constants ─────────────────────────────────────────────────
@@ -42,8 +41,6 @@ const BASE_ANIMATION_DURATION = 1400;
 const DURATION_PER_METRE = 3.8;
 const MIN_DURATION = 700;
 const MAX_DURATION = 2400;
-const HEADING_SMOOTH_ALPHA = 0.35;
-const POSITION_SMOOTH_ALPHA = 0.30;
 
 function haversineMetres(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
@@ -53,10 +50,6 @@ function haversineMetres(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function wrapAngleDelta(a: number, b: number): number {
-  const d = Math.abs(a - b) % 360;
-  return d > 180 ? 360 - d : d;
-}
 
 // ── Props ─────────────────────────────────────────────────────
 
@@ -93,8 +86,6 @@ export const AnimatedMQTTBus = memo(({
   const zoom = useMapZoom(14);
   const scale = zoomToScale(zoom);
 
-  const routeCoords = useMemo<RouteCoord[] | null>(() => normalizeRouteCoords(routePolyline), [routePolyline]);
-  const routeDistances = useMemo(() => routeCoords && routeCoords.length >= 2 ? buildRouteDistances(routeCoords) : null, [routeCoords]);
 
   // ── Smooth position animation ──────────────────────────────
   const currentRef = useRef<SmoothState>({ lat: latitude, lng: longitude, heading: heading % 360 });
@@ -203,7 +194,7 @@ export const AnimatedMQTTBus = memo(({
   );
 });
 
-function durationCalcKey(lat: number, lng: number, heading: number, speed?: number): number {
+function durationCalcKey(_lat: number, _lng: number, heading: number, speed?: number): number {
   return Math.round(speed ?? 0) + Math.round(heading);
 }
 
