@@ -490,7 +490,6 @@ function App() {
                         } satisfies DetailPanelEntity}
                         onClose={() => setSelectedMapBus(null)}
                         variant="vehicle"
-                        size="wide"
                         onBookVehicle={() => {
                           if (selectedMapBus) { setPrefillVehicle(selectedMapBus.busID); triggerBookingForm(); }
                         }}
