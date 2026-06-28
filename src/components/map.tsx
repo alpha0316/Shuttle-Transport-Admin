@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type MouseEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type MouseEvent, type Key } from 'react';
 import Map, { Marker, Source, Layer, GeolocateControl, type ViewState, type MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useClosestBus } from '../screens/useClosestBus';
@@ -8,7 +8,7 @@ import { AnimatedMQTTBus } from './AnimatedMQTTBus';
 import MarkerIcon from './icons/MarkerIcon';
 import LocationIcon from './icons/LocationIcon';
 import { VehicleHoverCard } from './VehicleHoverCard';
-import { MOCK_MAP_BUSES, type MockMapBus } from '../mockData/index';
+import { MOCK_MAP_BUSES } from '../mockData/index';
 
 const HOVER_DELAY_MS = 2000;
 
@@ -36,7 +36,6 @@ const DEFAULT_LONGITUDE = -1.573568;
 const DEFAULT_LATITUDE = 6.678045;
 const DEFAULT_ZOOM = 14.95;
 const MAX_MAP_ZOOM = 17;
-const TRANSITION_DURATION = 500;
 
 type ConnectionState = 'connecting' | 'waiting_for_positions' | 'ready';
 type BusLoadingToastProps = { state: ConnectionState };
@@ -184,13 +183,14 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
   const [viewState, setViewState] = useState<ViewState>({
     longitude: DEFAULT_LONGITUDE, latitude: DEFAULT_LATITUDE,
     zoom: DEFAULT_ZOOM, bearing: 0, pitch: 0,
+    padding: { top: 0, bottom: 0, left: 0, right: 0 },
   });
   const [storedDropPoints, setStoredDropPoints] = useState<DropPoint[]>([]);
   const [routeGeoJSON, setRouteGeoJSON] = useState<any>(null);
   const [selectedBusRoute, setSelectedBusRoute] = useState<any>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
   const [selectedBus, setSelectedBus] = useState<string | null>(null);
-  const [hoveredBus, setHoveredBus] = useState<{
+  const [] = useState<{
     busID: string; driverName: string; driverPhone: string;
     startPoint: string; endPoint: string; latitude: number; longitude: number;
   } | null>(null);
@@ -367,7 +367,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
         .filter(Boolean);
       if (coords.length >= 2) {
         try {
-          const coordStr = coords.map(c => `${c.lng},${c.lat}`).join(';');
+          const coordStr = coords.map((c: { lng: any; lat: any; }) => `${c.lng},${c.lat}`).join(';');
           const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordStr}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}&overview=full`;
           const res = await fetch(url);
           const data = await res.json();
@@ -383,7 +383,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
             type: 'Feature', properties: {},
             geometry: {
               type: 'LineString',
-              coordinates: coords.map(c => [c.lng, c.lat]),
+              coordinates: coords.map((c: { lng: any; lat: any; }) => [c.lng, c.lat]),
             },
           });
         }
@@ -393,7 +393,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
     }
 
     // Notify parent
-    onSelectBus?.({
+    onSelectBus?.(({
       busID: driver.busID,
       driverID: (driver as any).driverID || driver.busID,
       driverName: (driver as any).driverName || (driver as any).fullName || `Bus ${driver.busID}`,
@@ -401,7 +401,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
       busRoute: driver.busRoute || [],
       coords: driver.coords,
       _mock: (driver as any)._mock,
-    });
+    }) as any);
   }, [onSelectBus]);
 
   // Clear selected route when bus deselected
@@ -490,12 +490,12 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
       )}
 
       {/* Bus markers */}
-      {activeDrivers.map(driver => {
+      {activeDrivers.map((driver: { coords: { latitude: number; longitude: number; heading: any; speed: number | undefined; }; busID: Key | null | undefined; active: boolean | undefined; }) => {
         if (!driver.coords?.latitude || !driver.coords?.longitude) return null;
         return (
           <AnimatedMQTTBus
             key={driver.busID}
-            deviceId={driver.busID}
+            deviceId={String(driver.busID)}
             latitude={driver.coords.latitude}
             longitude={driver.coords.longitude}
             heading={driver.coords.heading || 0}

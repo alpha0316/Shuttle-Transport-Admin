@@ -50,7 +50,11 @@
       "Bash(git check-ignore *)",
       "Bash(cp /tmp/envcheck.mjs ./scratch-envcheck.mjs)",
       "Bash(node scratch-envcheck.mjs)",
-      "Bash(rm scratch-envcheck.mjs)"
+      "Bash(rm scratch-envcheck.mjs)",
+      "Bash(git fetch *)",
+      "Bash(git reset *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(grep -i \"^\\\\.env$\")"
     ]
   }
 }
