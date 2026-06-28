@@ -766,3 +766,12 @@ export const MOCK_MAP_BUSES: MockMapBus[] = [
   { busID: 'BUS-008', driverID: 'DRV-011', active: true, busRoute: ['Main Library', 'Pentecost', 'SRC', 'KSB'], coords: { latitude: 6.6755, longitude: -1.5690, heading: 290, speed: 3.2, timestamp: Date.now() }, driverName: 'Michael Adjei', phoneNumber: '024 012 3456', plateNumber: 'AS-6789-26' },
   { busID: 'BUS-009', driverID: 'DRV-005', active: false, busRoute: ['Commercial Area', 'KSB'], coords: { latitude: 6.6815, longitude: -1.5770, heading: 0, speed: 0, timestamp: Date.now() }, driverName: 'Kwesi Adomako', phoneNumber: '024 567 8901', plateNumber: 'AS-7890-26' },
 ];
+
+// Picks a consistent mock driver for a real bus/driver ID that has no match in MOCK_MAP_BUSES
+// (e.g. real MQTT device IDs), so the UI always has a name/phone/plate to display.
+export function getMockDriverForBus(id: string | number | null | undefined): MockMapBus {
+  const str = String(id ?? '');
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return MOCK_MAP_BUSES[hash % MOCK_MAP_BUSES.length];
+}

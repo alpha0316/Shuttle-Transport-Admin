@@ -8,7 +8,9 @@ import { AnimatedMQTTBus } from './AnimatedMQTTBus';
 import MarkerIcon from './icons/MarkerIcon';
 import LocationIcon from './icons/LocationIcon';
 import { VehicleHoverCard } from './VehicleHoverCard';
-import { MOCK_MAP_BUSES } from '../mockData/index';
+import { getMockDriverForBus } from '../mockData/index';
+
+const DEFAULT_DRIVER_PHOTO = '/Image/Driver.png';
 
 const HOVER_DELAY_MS = 2000;
 
@@ -221,7 +223,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
     }));
   }, [mqttDevices]);
 
-  // Determine active drivers: prefer MQTT > WebSocket > API > Mock
+  // Determine active drivers: prefer MQTT > WebSocket > API (no mock fallback)
   const activeDrivers = useMemo(() => {
     if (mqttDrivers.length > 0) return mqttDrivers;
     if (processedDrivers.length > 0) return processedDrivers;
@@ -231,23 +233,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
         coords: { latitude: d.coords?.latitude ?? 0, longitude: d.coords?.longitude ?? 0 },
       }));
     }
-    // Fallback to mock data
-    return MOCK_MAP_BUSES.map(m => ({
-      busID: m.busID,
-      driverID: m.driverID,
-      active: m.active,
-      busRoute: m.busRoute,
-      coords: {
-        latitude: m.coords.latitude,
-        longitude: m.coords.longitude,
-        heading: m.coords.heading,
-        speed: m.coords.speed,
-        timestamp: m.coords.timestamp,
-      },
-      driverName: m.driverName,
-      fullName: m.driverName,
-      _mock: true as const,
-    })) as any;
+    return [] as any[];
   }, [mqttDrivers, processedDrivers, staticDrivers]);
 
   // Connection state
@@ -393,10 +379,12 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
     }
 
     // Notify parent
+    const mockBus = getMockDriverForBus(driver.busID);
     onSelectBus?.(({
       busID: driver.busID,
       driverID: (driver as any).driverID || driver.busID,
-      driverName: (driver as any).driverName || (driver as any).fullName || `Bus ${driver.busID}`,
+      driverName: (driver as any).driverName || (driver as any).fullName || mockBus.driverName,
+      phoneNumber: (driver as any).phoneNumber || mockBus.phoneNumber,
       active: driver.active,
       busRoute: driver.busRoute || [],
       coords: driver.coords,
@@ -569,14 +557,15 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
       {hoverInfo && (() => {
         const driver = hoverInfo.driver;
         const stops: string[] = Array.isArray(driver.busRoute) ? driver.busRoute : [];
-        const mockBus = MOCK_MAP_BUSES.find(b => b.busID === driver.busID || b.driverID === (driver.driverID || driver.busID));
-        const phone = driver.phoneNumber || mockBus?.phoneNumber;
+        const mockBus = getMockDriverForBus(driver.busID);
+        const phone = driver.phoneNumber || mockBus.phoneNumber;
         return (
           <VehicleHoverCard
             x={hoverInfo.x}
             y={hoverInfo.y}
-            driverName={driver.driverName || driver.fullName || mockBus?.driverName || `Bus ${driver.busID}`}
+            driverName={driver.driverName || driver.fullName || mockBus.driverName}
             phone={phone}
+            photoUrl={DEFAULT_DRIVER_PHOTO}
             routeFrom={stops[0] ?? 'Start'}
             routeTo={stops[stops.length - 1] ?? 'Destination'}
             progress={50}

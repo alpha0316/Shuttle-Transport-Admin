@@ -5,7 +5,7 @@ import { House } from '@phosphor-icons/react';
 import MapGL, { type Driver as MapDriver } from './../components/map'
 import TopHeader from './../components/TopHeader'
 import DetailPanel, { type DetailPanelEntity } from './../components/DetailPanel'
-import { MOCK_MAP_BUSES } from '../mockData/index';
+import { getMockDriverForBus } from '../mockData/index';
 import { setPrefillVehicle, triggerBookingForm, triggerExpenseForm } from '../lib/prefill';
 // import ErrorBoundary from './components/ErrorBoundary';
 // import { useNavigate } from 'react-router-dom';
@@ -460,23 +460,23 @@ function App() {
                   // setIsSelectingDropOff={setIsSelectingDropOff}
                    onSelectBus={(bus) => {
                      setSelectedMapBus(bus);
-                     const mock = MOCK_MAP_BUSES.find(m => m.busID === bus.busID);
-                     if (mock?.plateNumber) setPrefillVehicle(mock.plateNumber);
+                     const mock = getMockDriverForBus(bus.busID);
+                     setPrefillVehicle(mock.plateNumber);
                    }}
                 />
 
                 {selectedMapBus && (() => {
-                    const mockBus = MOCK_MAP_BUSES.find(b => b.busID === selectedMapBus.busID);
-                    const plateNo = mockBus?.plateNumber || selectedMapBus.busID;
-                    const driverName = selectedMapBus.driverName || selectedMapBus.fullName || mockBus?.driverName || 'Unknown Driver';
+                    const mockBus = getMockDriverForBus(selectedMapBus.busID);
+                    const plateNo = mockBus.plateNumber;
+                    const driverName = selectedMapBus.driverName || selectedMapBus.fullName || mockBus.driverName;
                     const speedKmh = Math.round((selectedMapBus.coords.speed ?? 0) * 3.6);
                     return (
                       <DetailPanel
                         entity={{
                           title: plateNo,
                           driverName,
-                          driverId: mockBus?.driverID,
-                          driverPhone: mockBus?.phoneNumber,
+                          driverId: mockBus.driverID,
+                          driverPhone: selectedMapBus.phoneNumber || mockBus.phoneNumber,
                           status: selectedMapBus.active ? 'Active' : 'Inactive',
                           timeCheckIn: '07:01 AM',
                           lastUpdated: new Date(selectedMapBus.coords.timestamp ?? Date.now()).toLocaleTimeString(),
