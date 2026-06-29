@@ -208,7 +208,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
 
   // Merge MQTT devices into drivers format
   const mqttDrivers: Driver[] = useMemo(() => {
-    return Object.values(mqttDevices).map(device => ({
+    const mapped = Object.values(mqttDevices).map(device => ({
       busID: device.deviceId,
       driverID: device.deviceId,
       active: device.deviceStatus !== 'offline',
@@ -221,19 +221,23 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
         timestamp: new Date(device.position.serverTime).getTime(),
       },
     }));
+    console.log('📡 MQTT devices:', mqttDevices, '→ drivers:', mapped);
+    return mapped;
   }, [mqttDevices]);
 
   // Determine active drivers: prefer MQTT > WebSocket > API (no mock fallback)
   const activeDrivers = useMemo(() => {
-    if (mqttDrivers.length > 0) return mqttDrivers;
-    if (processedDrivers.length > 0) return processedDrivers;
-    if (staticDrivers.length > 0 && staticDrivers.some(d => d.coords?.latitude !== 0)) {
-      return staticDrivers.map(d => ({
-        ...d, busID: d.busID, active: true, busRoute: [],
-        coords: { latitude: d.coords?.latitude ?? 0, longitude: d.coords?.longitude ?? 0 },
-      }));
+    let result: Driver[];
+    let source: string;
+    if (mqttDrivers.length > 0) { result = mqttDrivers; source = 'MQTT'; }
+    else if (processedDrivers.length > 0) { result = processedDrivers; source = 'WebSocket'; }
+    else if (staticDrivers.length > 0 && staticDrivers.some(d => d.coords?.latitude !== 0)) {
+      result = staticDrivers.map(d => ({ ...d, busID: d.busID, active: true, busRoute: [], coords: { latitude: d.coords?.latitude ?? 0, longitude: d.coords?.longitude ?? 0 } }));
+      source = 'REST API';
     }
-    return [] as any[];
+    else { result = []; source = 'none'; }
+    console.log('🚌 Active drivers', `(${source}, ${result.length}):`, result.map(d => `${d.busID} @ ${d.coords.latitude?.toFixed(5)},${d.coords.longitude?.toFixed(5)} heading=${d.coords.heading}° speed=${d.coords.speed}m/s`));
+    return result;
   }, [mqttDrivers, processedDrivers, staticDrivers]);
 
   // Connection state
