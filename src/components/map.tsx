@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type MouseEvent, type Key } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type MouseEvent } from 'react';
 import Map, { Marker, Source, Layer, GeolocateControl, type ViewState, type MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useClosestBus } from '../screens/useClosestBus';
@@ -482,7 +482,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ pickUp, dropOff, onSelectBu
       )}
 
       {/* Bus markers */}
-      {activeDrivers.map((driver: { coords: { latitude: number; longitude: number; heading: any; speed: number | undefined; }; busID: Key | null | undefined; active: boolean | undefined; }) => {
+      {activeDrivers.map((driver) => {
         if (!driver.coords?.latitude || !driver.coords?.longitude) return null;
         return (
           <AnimatedMQTTBus

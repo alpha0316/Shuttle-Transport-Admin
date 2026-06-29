@@ -461,22 +461,22 @@ function App() {
                    onSelectBus={(bus) => {
                      setSelectedMapBus(bus);
                      const mock = getMockDriverForBus(bus.busID);
-                     setPrefillVehicle(mock.plateNumber);
+                     setPrefillVehicle(mock?.plateNumber || null);
                    }}
                 />
 
                 {selectedMapBus && (() => {
                     const mockBus = getMockDriverForBus(selectedMapBus.busID);
-                    const plateNo = mockBus.plateNumber;
-                    const driverName = selectedMapBus.driverName || selectedMapBus.fullName || mockBus.driverName;
+                    const plateNo = mockBus?.plateNumber || selectedMapBus.busID || 'Unknown';
+                    const driverName = selectedMapBus.driverName || selectedMapBus.fullName || mockBus?.driverName || 'Unknown Driver';
                     const speedKmh = Math.round((selectedMapBus.coords.speed ?? 0) * 3.6);
                     return (
                       <DetailPanel
                         entity={{
                           title: plateNo,
                           driverName,
-                          driverId: mockBus.driverID,
-                          driverPhone: selectedMapBus.phoneNumber || mockBus.phoneNumber,
+                          driverId: mockBus?.driverID || '',
+                          driverPhone: selectedMapBus.phoneNumber || mockBus?.phoneNumber,
                           status: selectedMapBus.active ? 'Active' : 'Inactive',
                           timeCheckIn: '07:01 AM',
                           lastUpdated: new Date(selectedMapBus.coords.timestamp ?? Date.now()).toLocaleTimeString(),
